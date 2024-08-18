@@ -57,32 +57,6 @@ router.post('/seller/register', async (req: CustomRequest, res: Response) => {
   }
 });
 
-// router.post('/seller/login', async (req: Request, res: Response) => {
-//   try {
-//     const { email, password } = req.body;
-
-//     // Find seller
-//     const seller = await Seller.findOne({ email });
-//     if (!seller) {
-//       return res.status(400).json({ message: 'Invalid credentials' });
-//     }
-
-//     // Check password
-//     const isMatch = await bcrypt.compare(password, seller.password);
-//     if (!isMatch) {
-//       return res.status(400).json({ message: 'Invalid credentials' });
-//     }
-
-//     // Create and send JWT token
-//     const token = jwt.sign({ id: seller._id }, JWT_SECRET, { expiresIn: '1d' });
-//     res.json({ token });
-//   } catch (error) {
-//     res.status(500).json({ message: 'Error logging in', error });
-//   }
-// });
-
-// Assume you have a secret key for JWT
-
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || 'access_secret';
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || 'refresh_secret';
 
