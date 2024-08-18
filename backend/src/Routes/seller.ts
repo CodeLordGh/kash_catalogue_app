@@ -2,16 +2,24 @@ import express from 'express';
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { Seller, Product, Catalog } from '../Models/models';
+import { Seller, Catalog } from '../Models/models';
 import { authenticateToken } from '../Utils/auth';
+
+interface CustomRequest extends Request {
+  user?: {
+    id: string;
+  };
+  token?: string
+}
 
 const router = express.Router();
 // const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
+/// <reference types="../../types" />
 
-router.post('/seller/register', async (req: Request, res: Response) => {
+router.post('/seller/register', async (req: CustomRequest, res: Response) => {
   try {
-    const { fullName, businessName, phoneNumber, email, password, storeId } = req.body;
+    const { fullName, businessName, phoneNumber, email, password } = req.body;
 
     // Check if seller already exists
     const existingSeller = await Seller.findOne({ email });
@@ -22,6 +30,9 @@ router.post('/seller/register', async (req: Request, res: Response) => {
     // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
+
+    // generate a storeId
+    const storeId = businessName + "-" + generateStoreId (businessName) 
 
     // Create new seller
     const newSeller = new Seller({
@@ -46,13 +57,37 @@ router.post('/seller/register', async (req: Request, res: Response) => {
   }
 });
 
+// router.post('/seller/login', async (req: Request, res: Response) => {
+//   try {
+//     const { email, password } = req.body;
 
+//     // Find seller
+//     const seller = await Seller.findOne({ email });
+//     if (!seller) {
+//       return res.status(400).json({ message: 'Invalid credentials' });
+//     }
+
+//     // Check password
+//     const isMatch = await bcrypt.compare(password, seller.password);
+//     if (!isMatch) {
+//       return res.status(400).json({ message: 'Invalid credentials' });
+//     }
+
+//     // Create and send JWT token
+//     const token = jwt.sign({ id: seller._id }, JWT_SECRET, { expiresIn: '1d' });
+//     res.json({ token });
+//   } catch (error) {
+//     res.status(500).json({ message: 'Error logging in', error });
+//   }
+// });
+
+// Assume you have a secret key for JWT
 
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || 'access_secret';
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || 'refresh_secret';
 
 // Login route
-router.post('/seller/login', async (req, res) => {
+router.post('/seller/login', async (req: CustomRequest, res) => {
   try {
     const { email, password } = req.body;
     const seller = await Seller.findOne({ email });
@@ -74,7 +109,7 @@ router.post('/seller/login', async (req, res) => {
 });
 
 // Refresh token route
-router.post('/token/refresh', async (req, res) => {
+router.post('/token/refresh', async (req: CustomRequest, res) => {
   const { refreshToken } = req.body;
   if (!refreshToken) return res.sendStatus(401);
 
@@ -94,7 +129,7 @@ router.post('/token/refresh', async (req, res) => {
 });
 
 // Logout route
-router.post('/seller/logout', authenticateToken, async (req, res) => {
+router.post('/seller/logout', authenticateToken, async (req: CustomRequest, res) => {
   try {
     const seller = await Seller.findById(req.user?.id);
     if (seller) {
@@ -110,6 +145,11 @@ router.post('/seller/logout', authenticateToken, async (req, res) => {
 
 function generateAccessToken(id: any) : string {
   return jwt.sign({ id }, ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+}
+
+function generateStoreId(name:string) {
+  return  Math.floor(100000 + Math.random() * 900000);
+
 }
 
 export default router;
