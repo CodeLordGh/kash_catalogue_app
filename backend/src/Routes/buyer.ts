@@ -1,16 +1,131 @@
-// src/routes/buyer.ts
-import express from'express';
+import express from 'express';
+import {
+  registerBuyer,
+  updateBuyerProfile,
+  viewCatalog,
+  addToCart,
+  removeFromCart,
+  viewCart,
+  createOrder,
+  getOrderHistory,
+  getOrderDetails
+} from '../Services/buyerService';
 
-  const router = express.Router();
-  
-  // View catalog by store code
-  router.get('/catalog/:storeCode', async (req, res) => {
-    
-  });
-  
-  // Place an order
-  router.post('/order', async (req, res) => {
-  });
-  
-  export default router;
-  
+interface CustomRequest extends express.Request {
+  buyerId?: string;
+}
+
+const router = express.Router();
+
+// Middleware to extract buyerId from headers or query params
+const extractBuyerId = (req: CustomRequest, res: express.Response, next: express.NextFunction) => {
+  const buyerId = req.headers['buyer-id'] as string || req.query.buyerId as string;
+
+  if (!buyerId) {
+    return res.status(400).json({ message: 'Buyer ID is required' });
+  }
+  req.buyerId = buyerId;
+  next();
+};
+
+// Register a new buyer
+router.post('/register', async (req, res) => {
+  try {
+    const { storeId } = req.body;
+    const result = await registerBuyer(storeId);
+    res.status(201).json(result);
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Update buyer profile
+router.put('/profile', extractBuyerId, async (req:CustomRequest , res) => {
+  try {
+    const { fullName, phoneNumber } = req.body;
+    await updateBuyerProfile(req.buyerId? req.buyerId: "", fullName, phoneNumber);
+    res.status(200).json({ message: 'Profile updated successfully' });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+}); 
+
+// View catalog
+router.get('/catalog/:storeId', extractBuyerId, async (req:CustomRequest, res) => {
+  try {
+    const { storeId } = req.params;
+    const catalog = await viewCatalog(req.buyerId? req.buyerId: "", storeId);
+    res.status(200).json(catalog);
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Add to cart
+router.post('/cart', extractBuyerId, async (req:CustomRequest, res) => {
+  try {
+    const { productId, quantity } = req.body;
+    await addToCart(req.buyerId? req.buyerId: "", productId, quantity);
+    res.status(200).json({ message: 'Product added to cart' });
+  } catch (error:any) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Remove from cart
+router.delete('/cart/:productId', extractBuyerId, async (req:CustomRequest, res) => {
+  try {
+    const { productId } = req.params;
+    await removeFromCart(req.buyerId? req.buyerId: "", productId);
+    res.status(200).json({ message: 'Product removed from cart' });
+  } catch (error:any) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// View cart
+router.get('/cart', extractBuyerId, async (req:CustomRequest, res) => {
+  try {
+    const cart = await viewCart(req.buyerId? req.buyerId: "");
+    res.status(200).json(cart);
+  } catch (error:any) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Create order
+router.post('/order', extractBuyerId, async (req:CustomRequest, res) => {
+  try {
+    const { deliveryAddress } = req.body;
+    const result = await createOrder(req.buyerId? req.buyerId: "", deliveryAddress);
+    res.status(201).json(result);
+  } catch (error:any) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Get order history
+router.get('/orders', extractBuyerId, async (req:CustomRequest, res) => {
+  try {
+    const orders = await getOrderHistory(req.buyerId? req.buyerId: "");
+    res.status(200).json(orders);
+  } catch (error:any) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Get order details
+router.get('/orders/:orderId', extractBuyerId, async (req:CustomRequest, res) => {
+  try {
+    const { orderId } = req.params;
+    const orderDetails = await getOrderDetails(req.buyerId? req.buyerId: "", orderId);
+    if (!orderDetails) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    res.status(200).json(orderDetails);
+  } catch (error:any) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+export default router;

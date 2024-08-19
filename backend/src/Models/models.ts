@@ -36,16 +36,33 @@ export const Seller = mongoose.model<ISeller>('Seller', SellerSchema);
 interface IBuyer extends Document {
     _id: mongoose.Types.ObjectId;
   fullName: string;
+  buyerId: string;
   phoneNumber: string;
+  cart: {
+    product: mongoose.Types.ObjectId ;
+    quantity: {
+      color: string;
+      qty: number;
+    }
+  }[];
   serviceProvider: string;
-  sellers: mongoose.Types.ObjectId[];
+  associatedStores: mongoose.Types.ObjectId[];
 }
 
 const BuyerSchema: Schema = new Schema({
-  fullName: { type: String, required: true },
-  phoneNumber: { type: String, required: true, unique: true },
-  serviceProvider: { type: String, required: true },
-  sellers: [{ type: Schema.Types.ObjectId, ref: 'Seller' }]
+  fullName: { type: String },
+  buyerId: {type: String},
+  phoneNumber: { type: String, unique: true },
+  serviceProvider: { type: String },
+  cart: [{
+    product: { type: Schema.Types.ObjectId, ref: 'Product' },
+    quantity: {
+      color: {type: String},
+      qty: {type: Number}
+    }
+  }],
+  orders: [{type: Schema.Types.ObjectId, ref: "Order"}],
+  associatedStores: [{ type: Schema.Types.ObjectId, ref: 'Seller' }]
 }, { timestamps: true });
 
 export const Buyer = mongoose.model<IBuyer>('Buyer', BuyerSchema);
@@ -75,7 +92,7 @@ const DeliveryAddressSchema: Schema = new Schema({
 export const DeliveryAddress = mongoose.model<IDeliveryAddress>('DeliveryAddress', DeliveryAddressSchema);
 
 // Product Schema
-interface IProduct extends Document {
+export interface IProduct extends Document {
     _id: mongoose.Types.ObjectId;
   name: string;
   description: string;

@@ -8,6 +8,7 @@ import morgan from 'morgan';
 // Import routes
 import sellerRoutes from './Routes/seller';
 import productRoutes from './Routes/products';
+import buyerPoutes from './Routes/buyer'
 // Import other route files as needed
 
 // Load environment variables
@@ -29,6 +30,7 @@ const MONGODB_URI = `mongodb+srv://${process.env.MONGO_DB_USER}:${process.env.MO
 // Set up routes
 app.use('/api', sellerRoutes);
 app.use('/api', productRoutes);
+app.use('/api', buyerPoutes)
 // Use other routes as needed
 
 // Error handling middleware
