@@ -34,8 +34,14 @@ const LoginScreen = () => {
         <Text style={styles.forgotPassword}>Forgot Password?</Text>
       </TouchableOpacity>
       
+
+      
       <TouchableOpacity style={styles.button} onPress={handleSignIn}>
-        <Text style={styles.buttonText}>Sign In</Text>
+      <Link href={{pathname: '/screenshome'}} >
+        <Text style={styles.buttonText}>
+          Sign In
+        </Text>
+        </Link>
       </TouchableOpacity>
       
       <View style={styles.signUpContainer}>
