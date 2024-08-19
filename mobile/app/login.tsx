@@ -37,7 +37,7 @@ const LoginScreen = () => {
 
       
       <TouchableOpacity style={styles.button} onPress={handleSignIn}>
-      <Link href={{pathname: '/screenshome'}} >
+      <Link href={{pathname: '/screens/mainScreen'}} >
         <Text style={styles.buttonText}>
           Sign In
         </Text>

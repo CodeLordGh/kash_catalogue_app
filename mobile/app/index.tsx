@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from "react-native";
-import LoginScreen from "./screens/login";
+import LoginScreen from "./login";
 
 export default function Index() {
   return (

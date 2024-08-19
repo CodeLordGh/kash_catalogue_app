@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, SafeAreaView } from 'react-native';
 import BottomNavBar from './home';
 import ItemSelectionFragment from './itemsSelection';
+import CartFragment from './cart';
 
 const MainScreen = () => {
   const [activeTab, setActiveTab] = useState('Shop');
@@ -16,6 +17,7 @@ const MainScreen = () => {
         return <ItemSelectionFragment />;
       case 'Home':
       case 'Cart':
+        return <CartFragment />;
       case 'Favorites':
       case 'Account':
         // Placeholder for other tabs
