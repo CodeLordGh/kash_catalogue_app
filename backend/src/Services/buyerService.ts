@@ -63,9 +63,9 @@ export const addToCart = async (buyerId: string, productId: string, quantity: nu
 
   const cartItem = buyer.cart.find(item => item.product.toString() === productId);
   if (cartItem) {
-    cartItem.quantity += quantity;
+    cartItem.quantity.qty += quantity;
   } else {
-    buyer.cart.push({ product: product._id, quantity });
+    buyer.cart.push({ product: product._id, quantity: { color: 'string', qty: quantity } });
   }
 
   await buyer.save();
