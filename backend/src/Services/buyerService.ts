@@ -4,14 +4,14 @@ import { Buyer, Seller, Catalog, Product, Order } from '../Models/models';
 export const registerBuyer = async (storeId: string): Promise<{ buyerId: string }> => {
   const seller = await Seller.findOne({ storeId });
   if (!seller) {
-    throw new Error('Invalid store ID');
+    return({buyerId: 'Invalid store ID'});
   }
 
   const buyerId = generateUniqueId().toString();
   const buyer = new Buyer({ buyerId, associatedStores: [seller._id] });
   await buyer.save();
 
-  return { buyerId };
+  return ({buyerId});
 };
 
 export const updateBuyerProfile = async (buyerId: string, fullName: string, phoneNumber: string): Promise<void> => {

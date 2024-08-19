@@ -5,11 +5,10 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Alert,
 } from "react-native";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import axios from "axios";
-
-
 
 interface storeIdProps {
   storeId: string;
@@ -20,13 +19,12 @@ interface sellerRegisProps {
   email: string;
   password: string;
   fullName: string;
-  busynessname: string;
+  busynessName: string;
   setEmail: Function;
   setPassword: Function;
   setFullname: Function;
   setBusinessName: Function;
 }
-
 
 const StoreIdRegis: React.FC<storeIdProps> = ({ storeId, setStoreId }) => (
   <TextInput
@@ -37,7 +35,16 @@ const StoreIdRegis: React.FC<storeIdProps> = ({ storeId, setStoreId }) => (
   />
 );
 
-const SellerRegis: React.FC<sellerRegisProps> = ({email, setEmail, password, setPassword, busynessname, setBusinessName, fullName, setFullname}) => {
+const SellerRegis: React.FC<sellerRegisProps> = ({
+  email,
+  setEmail,
+  password,
+  setPassword,
+  busynessName,
+  setBusinessName,
+  fullName,
+  setFullname,
+}) => {
   return (
     <View>
       <TextInput
@@ -50,7 +57,7 @@ const SellerRegis: React.FC<sellerRegisProps> = ({email, setEmail, password, set
       <TextInput
         style={styles.input}
         placeholder="Busyness name"
-        value={busynessname}
+        value={busynessName}
         onChangeText={(e) => setBusinessName(e)}
         secureTextEntry
       />
@@ -79,36 +86,66 @@ const RegisterScreen = () => {
   const [busynessName, setBusinessName] = useState("");
   const [password, setPassword] = useState("");
   const [option, setActiveOption] = useState("storeId");
+  const [isLoading, setisLoading] = useState(false);
+  const router = useRouter();
 
+  // RegisterScreen component
   const handleRegister = async () => {
     try {
       if (option === "storeId") {
         // Register with storeId
-        const response = await axios.post('https://vendex-9taw.onrender.com/api/register', {
-          storeId: storeId,
-        });
-        console.log('Registration successful:', response.data);
+        setisLoading(true);
+        await axios.post(
+          "https://vendex-9taw.onrender.com/api/register",
+          {
+            storeId: storeId,
+          }
+        ).then((response)=> {
+          console.log("Registration successful:", response.data);
+        setisLoading(false);
+        return router.replace("/screens/mainScreen");
+        })
       } else if (option === "seller") {
         // Register as a seller
-        const response = await axios.post('https://vendex-9taw.onrender.com/api/seller/register', {
-          fullName: fullName,
-          businessName: busynessName,
-          email: email,
-          password: password,
-        });
-        console.log('Seller registration successful:', response.data);
+        setisLoading(true);
+        await axios.post(
+          "https://vendex-9taw.onrender.com/api/seller/register",
+          {
+            fullName: fullName,
+            businessName: busynessName,
+            email: email,
+            password: password,
+          }
+        ).then(()=> {
+          
+        setisLoading(false);
+        return router.replace("/addProduct");
+        })
       }
     } catch (error: any) {
-      console.error('Registration failed:', error.response ? error.response.data : error.message);
+      console.error("Registration failed:", error.response.body);
+      setisLoading(false);
+      Alert.alert('Error', 'Something went wrong. Please try again.');
     }
   };
 
   const componentRender = () => {
     switch (option) {
-      case 'storeId':
+      case "storeId":
         return <StoreIdRegis storeId={storeId} setStoreId={setStoreId} />;
-      case 'seller':
-        return <SellerRegis email={email} password={password} fullName={fullName} busynessname={busynessName} setEmail={setEmail} setPassword={setPassword} setFullname={setFullname} setBusinessName={setBusinessName} />;
+      case "seller":
+        return (
+          <SellerRegis
+            email={email}
+            password={password}
+            fullName={fullName}
+            busynessName={busynessName}
+            setEmail={setEmail}
+            setPassword={setPassword}
+            setFullname={setFullname}
+            setBusinessName={setBusinessName}
+          />
+        );
       default:
         return null;
     }
@@ -121,10 +158,22 @@ const RegisterScreen = () => {
 
       {componentRender()}
 
-      <TouchableOpacity style={styles.button} onPress={handleRegister}>
-        <Text style={styles.buttonText}>Register</Text>
-      </TouchableOpacity>
-      {option === "storeId" ? <Text onPress={() => setActiveOption("seller")}>Register as a seller</Text> : <Text onPress={() => setActiveOption("storeId")}>Register with a store</Text>}
+      {!isLoading ? (
+        <TouchableOpacity style={styles.button} onPress={handleRegister}>
+          <Text style={styles.buttonText}>Register</Text>
+        </TouchableOpacity>
+      ) : (
+        <Text style={styles.button}>Loading...</Text>
+      )}
+      {option === "storeId" ? (
+        <Text onPress={() => setActiveOption("seller")}>
+          Register as a seller
+        </Text>
+      ) : (
+        <Text onPress={() => setActiveOption("storeId")}>
+          Register with a store
+        </Text>
+      )}
       <View style={styles.signInContainer}>
         <Text>Already have an account? </Text>
         <Link href={{ pathname: "/login" }}>

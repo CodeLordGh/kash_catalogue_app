@@ -12,6 +12,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "snackbar": {
+      "enabled": true
+    },
     "ios": {
       "supportsTablet": true
     },

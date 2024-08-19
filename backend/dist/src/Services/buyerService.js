@@ -15,12 +15,12 @@ const models_1 = require("../Models/models");
 const registerBuyer = (storeId) => __awaiter(void 0, void 0, void 0, function* () {
     const seller = yield models_1.Seller.findOne({ storeId });
     if (!seller) {
-        throw new Error('Invalid store ID');
+        return ({ buyerId: 'Invalid store ID' });
     }
     const buyerId = (0, buyerId_1.generateUniqueId)().toString();
     const buyer = new models_1.Buyer({ buyerId, associatedStores: [seller._id] });
     yield buyer.save();
-    return { buyerId };
+    return ({ buyerId });
 });
 exports.registerBuyer = registerBuyer;
 const updateBuyerProfile = (buyerId, fullName, phoneNumber) => __awaiter(void 0, void 0, void 0, function* () {
