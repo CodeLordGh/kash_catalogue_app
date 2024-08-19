@@ -19,7 +19,7 @@ const router = express.Router();
 
 router.post('/seller/register', async (req: CustomRequest, res: Response) => {
   try {
-    const { fullName, businessName, phoneNumber, email, password } = req.body;
+    const { fullName, businessName, email, password } = req.body;
 
     // Check if seller already exists
     const existingSeller = await Seller.findOne({ email });
@@ -38,7 +38,6 @@ router.post('/seller/register', async (req: CustomRequest, res: Response) => {
     const newSeller = new Seller({
       fullName,
       businessName,
-      phoneNumber,
       email,
       password: hashedPassword,
       storeId

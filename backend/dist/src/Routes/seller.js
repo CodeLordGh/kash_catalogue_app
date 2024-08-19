@@ -22,7 +22,7 @@ const router = express_1.default.Router();
 /// <reference types="../../types" />
 router.post('/seller/register', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { fullName, businessName, phoneNumber, email, password } = req.body;
+        const { fullName, businessName, email, password } = req.body;
         // Check if seller already exists
         const existingSeller = yield models_1.Seller.findOne({ email });
         if (existingSeller) {
@@ -37,7 +37,6 @@ router.post('/seller/register', (req, res) => __awaiter(void 0, void 0, void 0, 
         const newSeller = new models_1.Seller({
             fullName,
             businessName,
-            phoneNumber,
             email,
             password: hashedPassword,
             storeId
