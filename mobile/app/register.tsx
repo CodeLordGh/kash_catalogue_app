@@ -7,6 +7,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { Link } from "expo-router";
+import axios from "axios";
 
 
 
@@ -71,19 +72,36 @@ const SellerRegis: React.FC<sellerRegisProps> = ({email, setEmail, password, set
   );
 };
 
-
 const RegisterScreen = () => {
   const [storeId, setStoreId] = useState("");
   const [email, setEmail] = useState("");
   const [fullName, setFullname] = useState("");
   const [busynessName, setBusinessName] = useState("");
   const [password, setPassword] = useState("");
-  const [option, setActiveOption] = useState("storeId")
+  const [option, setActiveOption] = useState("storeId");
 
-  const handleRegister = () => {
-    // Implement register logic here
+  const handleRegister = async () => {
+    try {
+      if (option === "storeId") {
+        // Register with storeId
+        const response = await axios.post('https://vendex-9taw.onrender.com/api/register', {
+          storeId: storeId,
+        });
+        console.log('Registration successful:', response.data);
+      } else if (option === "seller") {
+        // Register as a seller
+        const response = await axios.post('https://vendex-9taw.onrender.com/api/seller/register', {
+          fullName: fullName,
+          businessName: busynessName,
+          email: email,
+          password: password,
+        });
+        console.log('Seller registration successful:', response.data);
+      }
+    } catch (error: any) {
+      console.error('Registration failed:', error.response ? error.response.data : error.message);
+    }
   };
-
 
   const componentRender = () => {
     switch (option) {
@@ -106,7 +124,7 @@ const RegisterScreen = () => {
       <TouchableOpacity style={styles.button} onPress={handleRegister}>
         <Text style={styles.buttonText}>Register</Text>
       </TouchableOpacity>
-      {option === "storeId"? <Text onPress={()=> setActiveOption("seller")}>Register as a seller</Text> : <Text onPress={()=> setActiveOption("storeId")}>Register with a store</Text>}
+      {option === "storeId" ? <Text onPress={() => setActiveOption("seller")}>Register as a seller</Text> : <Text onPress={() => setActiveOption("storeId")}>Register with a store</Text>}
       <View style={styles.signInContainer}>
         <Text>Already have an account? </Text>
         <Link href={{ pathname: "/login" }}>

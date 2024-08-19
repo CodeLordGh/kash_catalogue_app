@@ -30,7 +30,7 @@ const SellerSchema = new mongoose_1.Schema({
     refreshToken: { type: String },
     tokenBlacklist: [],
     businessName: { type: String, required: true },
-    phoneNumber: { type: String, required: true },
+    phoneNumber: { type: String },
     password: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     storeId: { type: String, required: true, unique: true },
