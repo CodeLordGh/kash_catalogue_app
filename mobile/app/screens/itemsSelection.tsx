@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TextInput, Image, TouchableOpacity, ImageSourcePropType } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Image, TouchableOpacity, ImageSourcePropType } from 'react-native';
 
 // Define interfaces for component props
 interface HeaderProps {}

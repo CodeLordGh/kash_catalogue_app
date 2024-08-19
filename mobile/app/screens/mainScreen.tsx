@@ -19,6 +19,7 @@ const MainScreen = () => {
       case 'Cart':
         return <CartFragment />;
       case 'Favorites':
+        // <AddItemScreen />
       case 'Account':
         // Placeholder for other tabs
         return <View style={styles.placeholderContent}></View>;
