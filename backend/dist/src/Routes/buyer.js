@@ -24,6 +24,12 @@ const extractBuyerId = (req, res, next) => {
     req.buyerId = buyerId;
     next();
 };
+// login
+router.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { input } = req.body;
+    const user = yield (0, buyerService_1.loginBuyer)(input);
+    res.status(200).json(user.buyerId);
+}));
 // Register a new buyer
 router.post('/register', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {

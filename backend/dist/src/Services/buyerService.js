@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getOrderDetails = exports.getOrderHistory = exports.createOrder = exports.viewCart = exports.removeFromCart = exports.addToCart = exports.viewCatalog = exports.updateBuyerProfile = exports.registerBuyer = void 0;
+exports.getOrderDetails = exports.getOrderHistory = exports.createOrder = exports.viewCart = exports.removeFromCart = exports.addToCart = exports.viewCatalog = exports.updateBuyerProfile = exports.loginBuyer = exports.registerBuyer = void 0;
 const buyerId_1 = require("../Utils/buyerId");
 const models_1 = require("../Models/models");
 const registerBuyer = (storeId) => __awaiter(void 0, void 0, void 0, function* () {
@@ -23,6 +23,24 @@ const registerBuyer = (storeId) => __awaiter(void 0, void 0, void 0, function* (
     return ({ buyerId });
 });
 exports.registerBuyer = registerBuyer;
+const loginBuyer = (input) => __awaiter(void 0, void 0, void 0, function* () {
+    let user;
+    // Check if the input is a 6-digit number
+    const isSixDigitId = /^\d{6}$/.test(input);
+    if (isSixDigitId) {
+        // If it's a 6-digit number, treat it as an ID
+        user = yield models_1.Buyer.findOne({ userId: input });
+    }
+    else {
+        // Otherwise, treat it as a phone number
+        user = yield models_1.Buyer.findOne({ phoneNumber: input });
+    }
+    if (!user) {
+        throw new Error('User not found');
+    }
+    return user;
+});
+exports.loginBuyer = loginBuyer;
 const updateBuyerProfile = (buyerId, fullName, phoneNumber) => __awaiter(void 0, void 0, void 0, function* () {
     const buyer = yield models_1.Buyer.findOne({ buyerId });
     if (!buyer) {

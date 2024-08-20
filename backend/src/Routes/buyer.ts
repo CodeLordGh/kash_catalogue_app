@@ -8,7 +8,8 @@ import {
   viewCart,
   createOrder,
   getOrderHistory,
-  getOrderDetails
+  getOrderDetails,
+  loginBuyer
 } from '../Services/buyerService';
 
 interface CustomRequest extends express.Request {
@@ -27,6 +28,13 @@ const extractBuyerId = (req: CustomRequest, res: express.Response, next: express
   req.buyerId = buyerId;
   next();
 };
+
+// login
+router.post("/login", async (req, res) => {
+  const { input } = req.body;
+  const user = await loginBuyer(input);
+  res.status(200).json(user.buyerId);
+})
 
 // Register a new buyer
 router.post('/register', async (req, res) => {

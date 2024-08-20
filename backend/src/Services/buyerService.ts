@@ -14,6 +14,27 @@ export const registerBuyer = async (storeId: string): Promise<{ buyerId: string 
   return ({buyerId});
 };
 
+export const loginBuyer = async (input: string) => {
+  let user;
+
+    // Check if the input is a 6-digit number
+    const isSixDigitId = /^\d{6}$/.test(input);
+
+    if (isSixDigitId) {
+        // If it's a 6-digit number, treat it as an ID
+        user = await Buyer.findOne({ userId: input });
+    } else {
+        // Otherwise, treat it as a phone number
+        user = await Buyer.findOne({ phoneNumber: input });
+    }
+
+    if (!user) {
+        throw new Error('User not found');
+    }
+
+    return user;
+}
+
 export const updateBuyerProfile = async (buyerId: string, fullName: string, phoneNumber: string): Promise<void> => {
   const buyer = await Buyer.findOne({ buyerId });
 

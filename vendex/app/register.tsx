@@ -7,15 +7,8 @@ import {
   StyleSheet,
   Alert,
 } from "react-native";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import axios from "axios";
-import { StackNavigationProp } from "@react-navigation/stack";
-import { RootStackParamList } from "./types";
-import { useNavigation } from "@react-navigation/native";
-
-
-type RegisterScreenNavigationProp = StackNavigationProp<RootStackParamList>
-
 
 interface storeIdProps {
   storeId: string;
@@ -66,7 +59,7 @@ const SellerRegis: React.FC<sellerRegisProps> = ({
         placeholder="Busyness name"
         value={busynessName}
         onChangeText={(e) => setBusinessName(e)}
-        keyboardType="ascii-capable"
+        secureTextEntry
       />
       <TextInput
         style={styles.input}
@@ -94,7 +87,7 @@ const RegisterScreen = () => {
   const [password, setPassword] = useState("");
   const [option, setActiveOption] = useState("storeId");
   const [isLoading, setisLoading] = useState(false);
-  const navigation = useNavigation<RegisterScreenNavigationProp>();
+  const router = useRouter();
 
   // RegisterScreen component
   const handleRegister = async () => {
@@ -110,7 +103,7 @@ const RegisterScreen = () => {
         ).then((response)=> {
           console.log("Registration successful:", response.data);
         setisLoading(false);
-        return navigation.navigate('BuyerMainScreen')
+        return router.replace("/screens/mainScreen");
         })
       } else if (option === "seller") {
         // Register as a seller
@@ -126,7 +119,7 @@ const RegisterScreen = () => {
         ).then(()=> {
           
         setisLoading(false);
-        return navigation.navigate("SellerMainScreen")
+        return router.replace("/addProduct");
         })
       }
     } catch (error: any) {
@@ -181,7 +174,6 @@ const RegisterScreen = () => {
           Register with a store
         </Text>
       )}
-      
       <View style={styles.signInContainer}>
         <Text>Already have an account? </Text>
         <Link href={{ pathname: "/login" }}>
