@@ -23,6 +23,10 @@ router.post('/product', auth_1.authenticateToken, (req, res) => __awaiter(void 0
     try {
         const { name, description, price, stock } = req.body;
         const sellerId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        console.log(stock);
+        console.log(name);
+        console.log(price);
+        console.log(description);
         const seller = yield models_1.Seller.findById(sellerId);
         if (!seller) {
             return res.status(404).json({ message: 'Seller not found' });
@@ -39,7 +43,7 @@ router.post('/product', auth_1.authenticateToken, (req, res) => __awaiter(void 0
         yield models_1.Catalog.findByIdAndUpdate(seller.catalog, {
             $push: { products: newProduct._id }
         });
-        res.status(201).json(newProduct);
+        res.status(201).json({ message: "Item added succesfully" });
     }
     catch (error) {
         res.status(500).json({ message: 'Error creating product', error });
