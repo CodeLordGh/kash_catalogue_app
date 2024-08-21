@@ -72,6 +72,21 @@ router.post('/seller/login', (req, res) => __awaiter(void 0, void 0, void 0, fun
         res.status(500).json({ message: 'Error logging in', error });
     }
 }));
+router.post("/seller/product", auth_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { name, price, description, stock } = req.body;
+    const user = req.user;
+    const catalog = user === null || user === void 0 ? void 0 : user.catalog;
+    try {
+        const newProduct = new models_1.Product({
+            name, price, description, stock, catalog
+        });
+        yield newProduct.save();
+        return res.status(201).json({ message: "Product added successfully" });
+    }
+    catch (error) {
+        return res.status(500).json({ message: "Server internal Error!" });
+    }
+}));
 // Refresh token route
 router.post('/token/refresh', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { refreshToken } = req.body;

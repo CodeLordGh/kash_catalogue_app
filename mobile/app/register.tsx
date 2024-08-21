@@ -165,13 +165,10 @@ const RegisterScreen = () => {
 
       {componentRender()}
 
-      {!isLoading ? (
         <TouchableOpacity style={styles.button} onPress={handleRegister}>
-          <Text style={styles.buttonText}>Register</Text>
+          <Text style={styles.buttonText}>{isLoading? "Loading...": "Register"}</Text>
         </TouchableOpacity>
-      ) : (
-        <Text style={styles.button}>Loading...</Text>
-      )}
+      
       {option === "storeId" ? (
         <Text onPress={() => setActiveOption("seller")}>
           Register as a seller

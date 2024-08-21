@@ -8,9 +8,9 @@ import SellerMainScreen from './sellerMainScreen';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
-export default function Index() {
+    export default function Index() {
   return (
-      <Stack.Navigator initialRouteName="Login">
+      <Stack.Navigator screenOptions={{headerShown: false}} initialRouteName="Login">
         <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
         <Stack.Screen name="BuyerMainScreen" component={BuyerMainScreen} />
         <Stack.Screen name='Login' component={LoginScreen} />

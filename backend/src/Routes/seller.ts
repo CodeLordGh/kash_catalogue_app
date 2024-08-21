@@ -2,12 +2,14 @@ import express from 'express';
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { Seller, Catalog } from '../Models/models';
+import { Seller, Catalog, Product } from '../Models/models';
 import { authenticateToken } from '../Utils/auth';
+import mongoose from 'mongoose';
 
 interface CustomRequest extends Request {
   user?: {
     id: string;
+    catalog: any
   };
   token?: string
 }
@@ -80,6 +82,22 @@ router.post('/seller/login', async (req: CustomRequest, res) => {
     res.status(500).json({ message: 'Error logging in', error });
   }
 });
+
+router.post("/seller/product", authenticateToken, async (req: CustomRequest, res) => {
+  const { name, price, description, stock } = req.body;
+  const user = req.user
+  const catalog = user?.catalog
+
+  try {
+    const newProduct = new Product({
+      name, price, description, stock, catalog
+    });
+    await newProduct.save();
+    return res.status(201).json({ message: "Product added successfully"});
+  } catch (error) {
+    return res.status(500).json({message: "Server internal Error!"})
+  }
+})
 
 // Refresh token route
 router.post('/token/refresh', async (req: CustomRequest, res) => {

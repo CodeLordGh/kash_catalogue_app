@@ -5,11 +5,13 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "./types";
 import { StackNavigationProp } from "@react-navigation/stack";
 import axios from "axios";
+import { storeToken } from "./token";
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -21,25 +23,32 @@ const LoginScreen = () => {
   const [option, setOption] = useState("buyer");
   const navigation = useNavigation<LoginScreenNavigationProp>();
 
+
   const handleSignIn = async () => {
     if (option === "seller") {
       try {
         setLoading(true)
-        await axios.post("/api/seller/login", { email, password })
-        .then(()=> {
+        await axios.post("https://vendex-9taw.onrender.com/api/seller/login", { email, password })
+        .then((data)=> {
+          storeToken(data.data.accessToken, data.data.refreshToken)
           setLoading(false)
-          return navigation.navigate("SellerMainScreen")
+          return navigation.replace("SellerMainScreen")
         })
       } catch (error) {
         setLoading(false)
         throw error;
       }
     } else if(option === "buyer"){
-      setLoading(true)
-      await axios.post("/api/login").then(()=> {
+      try {
+        setLoading(true)
+      await axios.post("https://vendex-9taw.onrender.com/api/login").then(()=> {
         setLoading(false)
         return navigation.navigate("BuyerMainScreen")
       })
+      } catch (error) {
+        setLoading(false)
+        Alert.alert("Error logging in", "Please check your credentials and try again.")
+      }
     }
   };
 
