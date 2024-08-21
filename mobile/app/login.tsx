@@ -28,7 +28,7 @@ const LoginScreen = () => {
     if (option === "seller") {
       try {
         setLoading(true)
-        await axios.post("https://vendex-9taw.onrender.com/api/seller/login", { email, password })
+        await axios.post("https://czc9hkp8-3000.uks1.devtunnels.ms/api/seller/login", { email, password })
         .then((data)=> {
           storeToken(data.data.accessToken, data.data.refreshToken)
           setLoading(false)

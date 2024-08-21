@@ -18,6 +18,11 @@ router.post('/product', authenticateToken, async (req: CustomRequest, res: Respo
     try {
       const { name, description, price, stock } = req.body;
       const sellerId = req.user?.id;
+
+      console.log(stock)
+      console.log(name)
+      console.log(price)
+      console.log(description)
   
       const seller = await Seller.findById(sellerId);
       if (!seller) {
@@ -39,7 +44,7 @@ router.post('/product', authenticateToken, async (req: CustomRequest, res: Respo
         $push: { products: newProduct._id }
       });
   
-      res.status(201).json(newProduct);
+      res.status(201).json({message: "Item added succesfully"});
     } catch (error) {
       res.status(500).json({ message: 'Error creating product', error });
     }

@@ -8,7 +8,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, TextInput, ScrollView,
 const AddProduct = () => {
 
   const [color, setColor] = useState('');
-  const [quantity, setQuantity] = useState('');
+  const [qty, setQty] = useState('');
   const [name, setName] = useState("")
   const [price, setPrice] = useState("")
   const [description, setDescription] = useState("")
@@ -16,33 +16,42 @@ const AddProduct = () => {
   const [isLoading, setIsLoading] = useState(false)
 
   const handleAddProduct = () => {
-    if (color || quantity) {
-      setProducts([...products, { color, quantity }]);
+    if (color || qty) {
+      setProducts([...products, { color, qty }]);
     }
     setColor('');
-    setQuantity('');
+    setQty('');
   };
 
   const handlePupblish = async () => {
+    const token = await retrieveToken()
+    console.log(token)
     try {
-      await axios.post("https://vendex-9taw.onrender.com/api/seller/produc", {
+      setIsLoading(true)
+
+      await axios.post("https://czc9hkp8-3000.uks1.devtunnels.ms/api/product", {
         stock: products,
-        description,
-        name,
-        price
+        description: description,
+        name: name,
+        price: price
       }, {
         headers: {
-          Authorization: `Bearer ${await retrieveToken()}`
+          Authorization: `Bearer ${token}`
         }
-      }).then(()=> {
+      }).then((data)=> {
         setName("")
         setPrice("")
         setDescription("")
         setProducts([])
         setIsLoading(false)
-        Alert.alert("Product added successfully")
+        console.log(data.data)
+        Alert.alert(data.data.message)
       })
-    } catch (error) {
+    } catch (error: any) {
+      setIsLoading(false)
+      console.log(error)
+      console.log(error.data)
+
       Alert.alert("Error adding product!")
     }
   }
@@ -93,8 +102,8 @@ const AddProduct = () => {
         <TextInput
           style={styles._input}
           placeholder="Quantity"
-          value={quantity}
-          onChangeText={setQuantity}
+          value={qty}
+          onChangeText={setQty}
           keyboardType="numeric"
         />
       </View>
@@ -109,7 +118,7 @@ const AddProduct = () => {
     </View>
       </View>
       <TouchableOpacity style={styles.publishButton} onPress={() => handlePupblish()} >
-        <Text style={styles.publishButtonText}>Publish</Text>
+        <Text style={styles.publishButtonText}>{isLoading? "Publishing...": "Publish"}</Text>
       </TouchableOpacity>
     </View>
     </ScrollView>

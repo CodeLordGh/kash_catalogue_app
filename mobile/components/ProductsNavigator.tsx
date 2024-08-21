@@ -15,7 +15,7 @@ const ProductsNavigator = () => {
 
   return (
     <View style={{flex: 1}} >
-      <Tab.Navigator initialRouteName='Catalog' screenOptions={{headerShown: false}} >
+      <Tab.Navigator initialRouteName='Add Product' screenOptions={{headerShown: false}} >
       <Tab.Screen name="Catalog" component={ProductsCatalog} />
       <Tab.Screen name="Add Product" component={AddProduct} />
       <Tab.Screen name="Delete Product" component={DeleteProduct} />

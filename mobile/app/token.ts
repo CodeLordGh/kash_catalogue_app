@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
 
 export const storeToken = async (access_auth: string, refresh_auth: string) => {
+  console.log(access_auth, refresh_auth)
   try {
     await AsyncStorage.setItem('auth_token', access_auth);
     await AsyncStorage.setItem('refresh_token', refresh_auth);
@@ -14,6 +15,7 @@ export const storeToken = async (access_auth: string, refresh_auth: string) => {
 export const retrieveToken = async () => {
   try {
     const token = await AsyncStorage.getItem('auth_token');
+    console.log(token)
     return token;
   } catch (error) {
     console.error('Error retrieving token:', error);
