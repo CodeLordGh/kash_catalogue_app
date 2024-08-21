@@ -4,7 +4,6 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { Seller, Catalog, Product } from '../Models/models';
 import { authenticateToken } from '../Utils/auth';
-import mongoose from 'mongoose';
 
 interface CustomRequest extends Request {
   user?: {
@@ -81,9 +80,9 @@ router.post('/seller/login', async (req: CustomRequest, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Error logging in', error });
   }
-});
+})
 
-router.post("/seller/product", authenticateToken, async (req: CustomRequest, res) => {
+router.route("/seller/product").post(authenticateToken, async (req: CustomRequest, res) => {
   const { name, price, description, stock } = req.body;
   const user = req.user
   const catalog = user?.catalog
@@ -97,6 +96,18 @@ router.post("/seller/product", authenticateToken, async (req: CustomRequest, res
   } catch (error) {
     return res.status(500).json({message: "Server internal Error!"})
   }
+}).get(authenticateToken, async (req: CustomRequest, res) => {
+  const catalog = req.user?.catalog
+
+  try {
+    await Catalog.find({_id: catalog}).populate("products").then(()=> {
+      return res.status(200).json({products: catalog?.products})
+    })
+  } catch (error) {
+    return res.status(500).json({message: "Internal server Error!"})
+  }
+  // Product.find({ _id: { $in: catalog.products } });
+
 })
 
 // Refresh token route

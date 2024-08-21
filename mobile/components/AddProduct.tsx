@@ -3,18 +3,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, TextInput, ScrollView, Button } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, TextInput, ScrollView, Button, Alert } from 'react-native';
 
 const AddProduct = () => {
 
-  const navigation = useNavigation();
   const [color, setColor] = useState('');
   const [quantity, setQuantity] = useState('');
   const [name, setName] = useState("")
   const [price, setPrice] = useState("")
   const [description, setDescription] = useState("")
-  const [catalog, setCatalog] = useState("")
-  const [products, setProducts] = useState<{ color: string; quantity: string; }[]>([]);
+  const [products, setProducts] = useState<{ color: string; qty: string; }[]>([]);
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleAddProduct = () => {
     if (color || quantity) {
@@ -25,17 +24,27 @@ const AddProduct = () => {
   };
 
   const handlePupblish = async () => {
-    await axios.post("", {
-      stock: products,
-      description,
-      name,
-      catalog,
-      price
-    }, {
-      headers: {
-        Authorization: `Bearer ${await retrieveToken()}`
-      }
-    })
+    try {
+      await axios.post("https://vendex-9taw.onrender.com/api/seller/produc", {
+        stock: products,
+        description,
+        name,
+        price
+      }, {
+        headers: {
+          Authorization: `Bearer ${await retrieveToken()}`
+        }
+      }).then(()=> {
+        setName("")
+        setPrice("")
+        setDescription("")
+        setProducts([])
+        setIsLoading(false)
+        Alert.alert("Product added successfully")
+      })
+    } catch (error) {
+      Alert.alert("Error adding product!")
+    }
   }
 
 
@@ -54,25 +63,25 @@ const AddProduct = () => {
       </TouchableOpacity>
       <View style={styles.formContainer}>
         <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Product Name</Text>
-          <TextInput style={styles.input} placeholder="Enter Product Name" />
+          <Text style={styles.inputLabel} >Product Name</Text>
+          <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Enter Product Name" />
         </View>
         <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Description</Text>
-          <TextInput style={styles.input} placeholder="Enter Description" />
+          <Text style={styles.inputLabel} >Description</Text>
+          <TextInput style={styles.input} value={description} onChangeText={setDescription} placeholder="Enter Description" />
         </View>
         <View style={styles.inputContainer}>
           <Text style={styles.inputLabel}>Price</Text>
-          <TextInput style={styles.input} placeholder="Enter Price" />
+          <TextInput style={styles.input} value={price} onChangeText={setPrice} placeholder="Enter Price" />
         </View>
-        <View style={styles.inputContainer}>
+        {/* <View style={styles.inputContainer}>
           <Text style={styles.inputLabel}>Size</Text>
           <TextInput style={styles.input} placeholder="Enter Size" />
-        </View>
-        <View style={styles.inputContainer}>
+        </View> */}
+        {/* <View style={styles.inputContainer}>
           <Text style={styles.inputLabel}>Category</Text>
-          <TextInput style={styles.input} placeholder="Enter Category" />
-        </View>
+          <TextInput style={styles.input}  placeholder="Enter Category" />
+        </View> */}
         <View>
       <View style={styles._inputContainer}>
         <TextInput
@@ -93,7 +102,7 @@ const AddProduct = () => {
       <View style={styles.productsContainer}>
         {products.map((product, index) => (
           <Text key={index} style={styles.product}>
-            Color: {product.color}, Quantity: {product.quantity}
+            Color: {product.color}, Quantity: {product.qty}
           </Text>
         ))}
       </View>

@@ -72,7 +72,7 @@ router.post('/seller/login', (req, res) => __awaiter(void 0, void 0, void 0, fun
         res.status(500).json({ message: 'Error logging in', error });
     }
 }));
-router.post("/seller/product", auth_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.route("/seller/product").post(auth_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { name, price, description, stock } = req.body;
     const user = req.user;
     const catalog = user === null || user === void 0 ? void 0 : user.catalog;
@@ -86,6 +86,18 @@ router.post("/seller/product", auth_1.authenticateToken, (req, res) => __awaiter
     catch (error) {
         return res.status(500).json({ message: "Server internal Error!" });
     }
+})).get(auth_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const catalog = (_a = req.user) === null || _a === void 0 ? void 0 : _a.catalog;
+    try {
+        yield models_1.Catalog.find({ _id: catalog }).populate("products").then(() => {
+            return res.status(200).json({ products: catalog === null || catalog === void 0 ? void 0 : catalog.products });
+        });
+    }
+    catch (error) {
+        return res.status(500).json({ message: "Internal server Error!" });
+    }
+    // Product.find({ _id: { $in: catalog.products } });
 }));
 // Refresh token route
 router.post('/token/refresh', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
