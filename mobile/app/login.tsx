@@ -19,35 +19,44 @@ const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [storeId, setStoreId] = useState("");
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
   const [option, setOption] = useState("buyer");
   const navigation = useNavigation<LoginScreenNavigationProp>();
-
 
   const handleSignIn = async () => {
     if (option === "seller") {
       try {
-        setLoading(true)
-        await axios.post("https://czc9hkp8-3000.uks1.devtunnels.ms/api/seller/login", { email, password })
-        .then((data)=> {
-          storeToken(data.data.accessToken, data.data.refreshToken)
-          setLoading(false)
-          return navigation.replace("SellerMainScreen")
-        })
+        setLoading(true);
+        await axios
+          .post("https://czc9hkp8-3000.uks1.devtunnels.ms/api/seller/login", {
+            email,
+            password,
+          })
+          .then((data) => {
+            console.log(data.data.storeId)
+            storeToken(data.data.accessToken, data.data.refreshToken, data.data.storeId);
+            setLoading(false);
+            return navigation.replace("SellerMainScreen");
+          });
       } catch (error) {
-        setLoading(false)
+        setLoading(false);
         throw error;
       }
-    } else if(option === "buyer"){
+    } else if (option === "buyer") {
       try {
-        setLoading(true)
-      await axios.post("https://vendex-9taw.onrender.com/api/login").then(()=> {
-        setLoading(false)
-        return navigation.navigate("BuyerMainScreen")
-      })
+        setLoading(true);
+        await axios
+          .post("https://vendex-9taw.onrender.com/api/login")
+          .then(() => {
+            setLoading(false);
+            return navigation.navigate("BuyerMainScreen");
+          });
       } catch (error) {
-        setLoading(false)
-        Alert.alert("Error logging in", "Please check your credentials and try again.")
+        setLoading(false);
+        Alert.alert(
+          "Error logging in",
+          "Please check your credentials and try again."
+        );
       }
     }
   };
@@ -95,24 +104,33 @@ const LoginScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.logo}>VendEx</Text>
-      <Text style={styles.title}>Sign In</Text>
+      <Text style={styles.logo}>Ezuru</Text>
+      <View
+        style={{
+          backgroundColor: "white",
+          borderRadius: 15,
+          paddingHorizontal: 20,
+          paddingBottom: 40
+        }}
+      >
+        <Text style={styles.title}>Sign In</Text>
+        {formDisplay()}
 
-      {formDisplay()}
-
-      <TouchableOpacity style={styles.button} onPress={handleSignIn}>
-        <Text style={styles.buttonText}>
-          {loading ? "Loading..." : "Sign In"}
-        </Text>
-      </TouchableOpacity>
-
-      <View style={styles.signUpContainer}>
-        <Text>Don't have an account? </Text>
-        <TouchableOpacity onPress={() => navigation.navigate("RegisterScreen")}>
-          <Text style={styles.signUpText}>Sign Up</Text>
+        <TouchableOpacity style={styles.button} onPress={handleSignIn}>
+          <Text style={styles.buttonText}>
+            {loading ? "Loading..." : "Sign In"}
+          </Text>
         </TouchableOpacity>
-      </View>
 
+        <View style={styles.signUpContainer}>
+          <Text>Don't have an account? </Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("RegisterScreen")}
+          >
+            <Text style={styles.signUpText}>Sign Up</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
       <View style={styles.footer}>
         <TouchableOpacity>
           <Text style={styles.footerText}>Privacy Policy</Text>
@@ -130,25 +148,21 @@ const LoginScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: "space-between",
     padding: 20,
-    backgroundColor: "white",
+    backgroundColor: "#6200EE",
   },
   logo: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 20,
+    
   },
   title: {
     fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 20,
+    marginVertical: 20,
   },
   input: {
     height: 40,
-    borderColor: "gray",
-    borderWidth: 1,
+    backgroundColor: "#f5f5f5",
     marginBottom: 10,
     paddingHorizontal: 10,
     borderRadius: 5,
@@ -164,7 +178,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   button: {
-    backgroundColor: "red",
+    backgroundColor: "#6200EE",
     padding: 15,
     borderRadius: 5,
     alignItems: "center",
@@ -187,7 +201,8 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   footerText: {
-    color: "gray",
+    color: "white",
+    fontSize: 15
   },
 });
 

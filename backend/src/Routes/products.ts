@@ -18,11 +18,6 @@ router.post('/product', authenticateToken, async (req: CustomRequest, res: Respo
     try {
       const { name, description, price, stock } = req.body;
       const sellerId = req.user?.id;
-
-      console.log(stock)
-      console.log(name)
-      console.log(price)
-      console.log(description)
   
       const seller = await Seller.findById(sellerId);
       if (!seller) {

@@ -7,6 +7,7 @@ const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || 'access_secret';
 export const authenticateToken = async (req: any, res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
+  // console.log(token)
 
   if (!token) return res.sendStatus(401);
 
@@ -23,7 +24,7 @@ export const authenticateToken = async (req: any, res: Response, next: NextFunct
       return res.sendStatus(403);
     }
 
-    req.user = { id: seller._id.toString() };
+    req.user = { id: seller._id.toString(), senderModel: "Seller", receiverModel: "Buyer" };
     req.token = token;
     next();
   } catch (error) {

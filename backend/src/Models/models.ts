@@ -14,6 +14,7 @@ interface ISeller extends Document {
   catalog: mongoose.Types.ObjectId;
   customers: mongoose.Types.ObjectId[];
   deliveryAddresses: mongoose.Types.ObjectId[];
+  chatId: string
 }
 
 const SellerSchema: Schema = new Schema({
@@ -27,7 +28,8 @@ const SellerSchema: Schema = new Schema({
   storeId: { type: String, required: true, unique: true },
   catalog: { type: Schema.Types.ObjectId, ref: 'Catalog' },
   customers: [{ type: Schema.Types.ObjectId, ref: 'Buyer' }],
-  deliveryAddresses: [{ type: Schema.Types.ObjectId, ref: 'DeliveryAddress' }]
+  deliveryAddresses: [{ type: Schema.Types.ObjectId, ref: 'DeliveryAddress' }],
+  chatId: [{ type: String }]
 }, { timestamps: true });
 
 export const Seller = mongoose.model<ISeller>('Seller', SellerSchema);
@@ -47,12 +49,13 @@ interface IBuyer extends Document {
   }[];
   serviceProvider: string;
   associatedStores: mongoose.Types.ObjectId[];
+  chatId: string
 }
 
 const BuyerSchema: Schema = new Schema({
   fullName: { type: String },
   buyerId: {type: String},
-  phoneNumber: { type: String, unique: true },
+  phoneNumber: { type: String, unique: true, sparse: true },
   serviceProvider: { type: String },
   cart: [{
     product: { type: Schema.Types.ObjectId, ref: 'Product' },
@@ -62,7 +65,8 @@ const BuyerSchema: Schema = new Schema({
     }
   }],
   orders: [{type: Schema.Types.ObjectId, ref: "Order"}],
-  associatedStores: [{ type: Schema.Types.ObjectId, ref: 'Seller' }]
+  associatedStores: [{ type: Schema.Types.ObjectId, ref: 'Seller' }],
+  chatId: { type: String }
 }, { timestamps: true });
 
 export const Buyer = mongoose.model<IBuyer>('Buyer', BuyerSchema);
@@ -176,3 +180,24 @@ const PaymentSchema: Schema = new Schema({
 }, { timestamps: true });
 
 export const Payment = mongoose.model<IPayment>('Payment', PaymentSchema);
+
+
+export interface IMessage extends Document {
+  sender: Schema.Types.ObjectId;
+  receiver: Schema.Types.ObjectId;
+  message: string;
+  timestamp: Date;
+  senderModel: 'Seller' | 'Buyer';
+  receiverModel: 'Seller' | 'Buyer';
+}
+
+const MessageSchema: Schema = new Schema({
+  sender: { type: Schema.Types.ObjectId, required: true, refPath: 'senderModel' },
+  receiver: { type: Schema.Types.ObjectId, required: true, refPath: 'receiverModel' },
+  message: { type: String, required: true },
+  timestamp: { type: Date, default: Date.now },
+  senderModel: { type: String, required: true, enum: ['Seller', 'Buyer'] },
+  receiverModel: { type: String, required: true, enum: ['Seller', 'Buyer'] },
+}, { timestamps: true });
+
+export const Message = mongoose.model<IMessage>('Message', MessageSchema);

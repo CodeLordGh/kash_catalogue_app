@@ -5,10 +5,14 @@ import jwt from 'jsonwebtoken';
 import { Seller, Catalog, Product } from '../Models/models';
 import { authenticateToken } from '../Utils/auth';
 
-interface CustomRequest extends Request {
+export interface CustomRequest extends Request {
   user?: {
     id: string;
-    catalog: any
+    catalog: any;
+    sender: string;
+    senderModel: string;
+    receiver: string;
+    receiverModel: string;
   };
   token?: string
 }
@@ -76,7 +80,7 @@ router.post('/seller/login', async (req: CustomRequest, res) => {
     seller.refreshToken = refreshToken;
     await seller.save();
 
-    res.json({ accessToken, refreshToken });
+    res.json({ accessToken, refreshToken, storeId: seller.storeId });
   } catch (error) {
     res.status(500).json({ message: 'Error logging in', error });
   }
@@ -145,7 +149,7 @@ router.post('/seller/logout', authenticateToken, async (req: CustomRequest, res)
   }
 });
 
-function generateAccessToken(id: any) : string {
+export function generateAccessToken(id: any) : string {
   return jwt.sign({ id }, ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
 }
 

@@ -11,6 +11,7 @@ import {
   getOrderDetails,
   loginBuyer
 } from '../Services/buyerService';
+import { generateAccessToken } from './seller';
 
 interface CustomRequest extends express.Request {
   buyerId?: string;
@@ -33,6 +34,9 @@ const extractBuyerId = (req: CustomRequest, res: express.Response, next: express
 router.post("/login", async (req, res) => {
   const { input } = req.body;
   const user = await loginBuyer(input);
+
+  const accessToken = generateAccessToken(user.buyerId);
+
   res.status(200).json(user.buyerId);
 })
 
@@ -40,6 +44,7 @@ router.post("/login", async (req, res) => {
 router.post('/register', async (req, res) => {
   try {
     const { storeId } = req.body;
+    console.log(storeId)
     const result = await registerBuyer(storeId);
     res.status(201).json(result);
   } catch (error: any) {

@@ -16,8 +16,7 @@ const SellerMainScreen = () => {
             <Ionicons name="speedometer" size={size} color={color} />
           ),
         }} />
-      <Tab.Screen name="Messages" component={Messages} options={{
-          tabBarIcon: ({ color, size }) => (
+      <Tab.Screen name="Messages" component={Messages} options={{ tabBarIcon: ({ color, size }) => (
             <Ionicons name="chatbubbles" size={size} color={color} />
           ),
         }} />

@@ -5,6 +5,7 @@ import RegisterScreen from './register';
 import BuyerMainScreen from './screens/mainScreen';
 import { RootStackParamList } from './types';
 import SellerMainScreen from './sellerMainScreen';
+import Chat from './chat';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -15,6 +16,7 @@ const Stack = createStackNavigator<RootStackParamList>();
         <Stack.Screen name="BuyerMainScreen" component={BuyerMainScreen} />
         <Stack.Screen name='Login' component={LoginScreen} />
         <Stack.Screen name='SellerMainScreen' component={SellerMainScreen} />
+        <Stack.Screen name='Chat' component={Chat} />
       </Stack.Navigator>
   );
 }
