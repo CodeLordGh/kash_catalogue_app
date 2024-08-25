@@ -1,12 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
 
-export const storeToken = async (access_auth: string, refresh_auth: string, storeId: string) => {
+export const storeToken = async (access_auth: string/**, refresh_auth: string, storeId: string */) => {
   
   try {
     await AsyncStorage.setItem('auth_token', access_auth);
-    await AsyncStorage.setItem('refresh_token', refresh_auth);
-    await AsyncStorage.setItem('store_id', storeId)
+    // await AsyncStorage.setItem('refresh_token', refresh_auth);
+    // await AsyncStorage.setItem('store_id', storeId)
   } catch (error) {
     console.error('Error storing token:', error);
     Alert.alert("Internal error! Please try again")

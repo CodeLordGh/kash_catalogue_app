@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,8 @@ import { RootStackParamList } from "./types";
 import { StackNavigationProp } from "@react-navigation/stack";
 import axios from "axios";
 import { storeToken } from "./token";
+import { useDispatch } from "react-redux";
+import { setCartProducts, setCatalogProducts, setChatId, setShop, setUserInfo } from "./screens/userSlice";
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -23,6 +25,8 @@ const LoginScreen = () => {
   const [loading, setLoading] = useState(false);
   const [option, setOption] = useState("buyer");
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const dispatch = useDispatch();
+
 
   const handleSignIn = async () => {
     if (option === "seller") {
@@ -35,7 +39,7 @@ const LoginScreen = () => {
           })
           .then((data) => {
             console.log(data.data)
-            storeToken(data.data.accessToken, data.data.refreshToken, data.data.storeId);
+            storeToken(data.data.accessToken/**, data.data.refreshToken, data.data.storeId */);
             setLoading(false);
             return navigation.replace("SellerMainScreen");
           });
@@ -45,23 +49,33 @@ const LoginScreen = () => {
       }
     } else if (option === "buyer") {
       try {
-        setLoading(true);
-        await axios
-          .post("https://czc9hkp8-3000.uks1.devtunnels.ms/api/login", {input: login})
-          .then((data) => {
-            console.log(data.data)
-            setLoading(false);
-            return navigation.navigate("BuyerMainScreen");
-          });
+        const response = await axios.post('https://czc9hkp8-3000.uks1.devtunnels.ms/api/login', { input: login });
+        const data = response.data;
+  
+        // Dispatch actions to update the Redux store
+        dispatch(setChatId(data.user.chatId));
+        dispatch(setCartProducts(data.user.cart));
+        dispatch(setCatalogProducts(data.user.catalog.products));
+        dispatch(setUserInfo({
+          buyerId: data.user.buyerId,
+          fullName: data.user.fullName,
+          email: data.user.email,
+          phoneNumber: data.user.phoneNumber,
+        }));
+        dispatch(setShop({
+          businessName: data.user.seller.businessName,
+          storeId: data.user.seller.storeId,
+        }));
+        console.log(data.user.catalog.products)
+        return navigation.navigate("BuyerMainScreen");
       } catch (error) {
         setLoading(false);
-        Alert.alert(
-          "Error logging in",
-          "Please check your credentials and try again."
-        );
+        Alert.alert("Error logging in", "Please check your credentials and try again.");
       }
     }
   };
+
+
 
   const formDisplay = () => {
     if (option === "seller") {

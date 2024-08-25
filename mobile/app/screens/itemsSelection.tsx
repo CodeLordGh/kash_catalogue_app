@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TextInput, Image, TouchableOpacity, ImageSourcePropType } from 'react-native';
+import { useSelector } from 'react-redux';
 
 // Define interfaces for component props
 interface HeaderProps {}
@@ -62,7 +63,8 @@ const CartSummaryItem: React.FC<CartSummaryItemProps> = ({ item, price }) => (
   </View>
 );
 
-const checkout = () => {
+const checkout = () => {  
+
   return (
     <View style={styles.checkoutSection}>
         <Text style={styles.checkoutTitle}>Checkout</Text>
@@ -73,6 +75,10 @@ const checkout = () => {
 }
 
 const ItemSelectionFragment: React.FC = () => {
+  const catalogProducts = useSelector((state:any) => state.user.catalogProducts);
+
+  console.log(catalogProducts)
+
   return (
     <View style={styles.container}>
       <Header />

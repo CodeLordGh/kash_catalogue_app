@@ -13,7 +13,7 @@ import buyerRoutes from './Routes/buyer';
 import { authenticateToken } from './Utils/auth';
 
 // Load environment variables
-dotenv.config();
+dotenv.config()
 
 // Create Express app
 const app = express();
