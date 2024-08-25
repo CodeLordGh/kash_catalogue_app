@@ -3,15 +3,11 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import ProductsCatalog from './ProductsCatalog';
 import AddProduct from './AddProduct';
 import DeleteProduct from './DeleteProduct';
-import { Text, TouchableOpacity, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View } from 'react-native';
 
 const Tab = createBottomTabNavigator();
 
 const ProductsNavigator = () => {
-
-  const navigation = useNavigation()
-  const [showButton, setShowButton] = useState(true)
 
   return (
     <View style={{flex: 1}} >

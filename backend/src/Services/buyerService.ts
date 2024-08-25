@@ -2,15 +2,29 @@ import { generateUniqueId } from "../Utils/buyerId";
 import { Buyer, Seller, Catalog, Product, Order } from "../Models/models";
 import * as admin from "firebase-admin";
 import crypto from "crypto";
+import mongoose from "mongoose";
 
 {/** TODO: use crypto to generate chatId */}
+
+const updatePhoneNumber = async (buyerId: string, phoneNumber: string) => {
+  const result = await Buyer.updateOne(
+    { buyerId: buyerId, phoneNumber: null },
+    { $set: { phoneNumber: phoneNumber } }
+  );
+  
+  if (result.modifiedCount === 0) {
+    throw new Error('Phone number already exists or buyer not found');
+  }
+};
 
 export const registerBuyer = async (
   storeId: string
 ): Promise<{ buyerId: string } | {message: string }> => {
   const seller = await Seller.findOne({ storeId });
+  console.log(storeId)
   if (!seller) {
-    return { buyerId: "Invalid store ID" };
+    const err = new Error("No store found!");
+    throw err
   }
 
   const buyerId = generateUniqueId().toString();
@@ -43,32 +57,77 @@ export const registerBuyer = async (
     await seller.save();
   } catch (error) {
     console.log(error);
-    return { message: "Error creating chat" };
+    throw new Error("Error creating chat")
   }
 
   return { buyerId };
 };
 
+
+interface IBuyer {
+  fullName?: string;
+  buyerId: string;
+  serviceProvider?: string;
+  cart: Array<{
+    product: mongoose.Types.ObjectId;
+    quantity: {
+      color?: string;
+      qty: number;
+    };
+  }>;
+  orders: mongoose.Types.ObjectId[];
+  associatedStores: mongoose.Types.ObjectId[];
+  chatId?: string;
+}
+
+interface ISeller {
+  fullName: string;
+  refreshToken?: string;
+  tokenBlacklist?: string[];
+  businessName: string;
+  phoneNumber?: string;
+  password: string;
+  email: string;
+  storeId: string;
+  catalog: mongoose.Types.ObjectId;
+  customers?: mongoose.Types.ObjectId[];
+  deliveryAddresses?: mongoose.Types.ObjectId[];
+  chatId?: string[];
+}
+
+
 export const loginBuyer = async (input: string) => {
-  let user;
-
-  // Check if the input is a 6-digit number
-  const isSixDigitId = /^\d{6}$/.test(input);
-
-  if (isSixDigitId) {
-    // If it's a 6-digit number, treat it as an ID
-    user = await Buyer.findOne({ userId: input });
-  } else {
-    // Otherwise, treat it as a phone number
-    user = await Buyer.findOne({ phoneNumber: input });
-  }
-
+  const user = await Buyer.findOne({ buyerId: input }).populate({
+    path: 'cart.product',
+    select: '-__v'
+  }).populate({
+    path: 'orders',
+    select: '-__v',
+    populate: {
+      path: 'items.product',
+      select: '-__v'
+    }
+  }).populate({
+    path: 'associatedStores',
+    select: 'businessName storeId catalog'
+  });
+  
   if (!user) {
     throw new Error("User not found");
   }
   
-
-  return user;
+  // Assuming associatedStores is an array of ObjectId, we need to access the first one
+  const associatedStore = user.associatedStores[0] as unknown as ISeller; // Type assertion
+  
+  const seller = await Seller.findById(associatedStore).select('-password -email -chatId -_id -phoneNumber -tokenBlacklist -fullName -customers -createdAt -updatedAt -__v');
+  
+  const catalog = await Catalog.findById(seller?.catalog).select('-_id -createdAt -updatedAt -__v -seller');
+  
+  return {
+    ...user.toObject(),
+    seller,
+    catalog
+  };
 };
 
 export const updateBuyerProfile = async (

@@ -99,7 +99,7 @@ const Messages = () => {
         setMessages(filteredMessages);
       }
     });
-  }, [storeId]);
+  }, []);
 
   return (
     <View style={styles.container}>

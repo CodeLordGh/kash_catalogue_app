@@ -22,7 +22,7 @@ const SellerSchema: Schema = new Schema({
   refreshToken: {type: String},
   tokenBlacklist: [],
   businessName: { type: String, required: true },
-  phoneNumber: { type: String},
+  phoneNumber: { type: String, sparse: true},
   password: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   storeId: { type: String, required: true, unique: true },
@@ -54,20 +54,21 @@ interface IBuyer extends Document {
 
 const BuyerSchema: Schema = new Schema({
   fullName: { type: String },
-  buyerId: {type: String},
-  phoneNumber: { type: String, unique: true, sparse: true },
+  buyerId: { type: String, unique: true },
   serviceProvider: { type: String },
   cart: [{
     product: { type: Schema.Types.ObjectId, ref: 'Product' },
     quantity: {
-      color: {type: String},
-      qty: {type: Number}
+      color: { type: String },
+      qty: { type: Number }
     }
   }],
-  orders: [{type: Schema.Types.ObjectId, ref: "Order"}],
+  orders: [{ type: Schema.Types.ObjectId, ref: "Order" }],
   associatedStores: [{ type: Schema.Types.ObjectId, ref: 'Seller' }],
   chatId: { type: String }
 }, { timestamps: true });
+
+BuyerSchema.index({ phoneNumber: 1, buyerId: 1 }, { unique: true, sparse: true });
 
 export const Buyer = mongoose.model<IBuyer>('Buyer', BuyerSchema);
 

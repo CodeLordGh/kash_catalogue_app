@@ -37,7 +37,7 @@ router.post("/login", async (req, res) => {
 
   const accessToken = generateAccessToken(user.buyerId);
 
-  res.status(200).json(user.buyerId);
+  res.status(200).json({user, accessToken});
 })
 
 // Register a new buyer

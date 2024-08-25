@@ -39,6 +39,7 @@ mongoose.connect("mongodb://127.0.0.1:27017/vendex")
   .then(() => console.log('Connected to MongoDB'))
   .catch((error) => console.error('MongoDB connection error:', error));
 
+
 // Set up routes
 app.use('/api', sellerRoutes);
 app.use('/api', productRoutes);

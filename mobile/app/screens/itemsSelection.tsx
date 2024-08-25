@@ -62,6 +62,16 @@ const CartSummaryItem: React.FC<CartSummaryItemProps> = ({ item, price }) => (
   </View>
 );
 
+const checkout = () => {
+  return (
+    <View style={styles.checkoutSection}>
+        <Text style={styles.checkoutTitle}>Checkout</Text>
+        <CartSummaryItem item="Red T-shirt, Size M" price={25} />
+        <CartSummaryItem item="Blue Jeans, Size 32" price={45} />
+      </View>
+  )
+}
+
 const ItemSelectionFragment: React.FC = () => {
   return (
     <View style={styles.container}>
@@ -74,17 +84,6 @@ const ItemSelectionFragment: React.FC = () => {
           imageSource={require('../../assets/images/downloa.jpeg')}
           colors={['red', 'blue', 'green']}
         />
-        <ItemCard 
-          title="Anime Figure B" 
-          price={34.99} 
-          imageSource={require('../../assets/images/download.jpeg')}
-          colors={['black', 'white', 'yellow']}
-        />
-      </View>
-      <View style={styles.checkoutSection}>
-        <Text style={styles.checkoutTitle}>Checkout</Text>
-        <CartSummaryItem item="Red T-shirt, Size M" price={25} />
-        <CartSummaryItem item="Blue Jeans, Size 32" price={45} />
       </View>
     </View>
   );
@@ -122,7 +121,7 @@ const styles = StyleSheet.create({
   },
   itemsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'flex-start',
     padding: 10,
   },
   itemCard: {

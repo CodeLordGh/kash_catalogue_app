@@ -18,7 +18,8 @@ type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [storeId, setStoreId] = useState("");
+  let result = {} as any;
+  const [login, setLogin] = useState("")
   const [loading, setLoading] = useState(false);
   const [option, setOption] = useState("buyer");
   const navigation = useNavigation<LoginScreenNavigationProp>();
@@ -33,7 +34,7 @@ const LoginScreen = () => {
             password,
           })
           .then((data) => {
-            console.log(data.data.storeId)
+            console.log(data.data)
             storeToken(data.data.accessToken, data.data.refreshToken, data.data.storeId);
             setLoading(false);
             return navigation.replace("SellerMainScreen");
@@ -46,8 +47,9 @@ const LoginScreen = () => {
       try {
         setLoading(true);
         await axios
-          .post("https://vendex-9taw.onrender.com/api/login")
-          .then(() => {
+          .post("https://czc9hkp8-3000.uks1.devtunnels.ms/api/login", {input: login})
+          .then((data) => {
+            console.log(data.data)
             setLoading(false);
             return navigation.navigate("BuyerMainScreen");
           });
@@ -89,9 +91,9 @@ const LoginScreen = () => {
         <View>
           <TextInput
             style={styles.input}
-            placeholder="Store ID"
-            value={storeId}
-            onChangeText={setStoreId}
+            placeholder="User Id or Phone number"
+            value={login}
+            onChangeText={setLogin}
             keyboardType="name-phone-pad"
           />
           <TouchableOpacity onPress={() => setOption("seller")}>
