@@ -11,6 +11,7 @@ import { IMessage as GiftedChatIMessage } from "react-native-gifted-chat";
 import { retrieveToken } from "./token";
 import axios from "axios";
 
+
 type ChatRouteProp = RouteProp<ChatParamList, 'Chat'>;
 
 // Define the IMessage interface
