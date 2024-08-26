@@ -10,25 +10,28 @@ interface CartItem {
   }
 
 const initialState = {
-  product: {
-    _id: 'nike-air-max-2022',
-    name: 'Nike Air MAX 2022',
-    price: 690.00,
-    colors: [
-      { name: 'blue', quantity: 5 },
-      { name: 'black', quantity: 10 },
-      { name: 'yellow', quantity: 3 },
-    ],
-    sizes: ['32', '40', '42', '44'],
-  },
   selectedColor: 'black',
   selectedSize: '40',
   quantity: 1,
-  cart: [],
+  cart: [{
+    id: 0,
+    quantity: 0,
+  name: '',
+  color: '',
+  size: '',
+  price: '0',
+  index: ''
+  }],
   selectedProduct: {
     _id: '',
+    updatedAt: '',
     name: '',
     price: 0,
+    sizes: ['32', '40', '42', '44'],
+    stock: [{
+      color: '',
+      qty: 0
+    }],
   }
 };
 
@@ -45,7 +48,7 @@ const actionSlice = createSlice({
       state.selectedSize = action.payload;
     },
     incrementQuantity: (state) => {
-      const selectedColorStock = state.product.colors.find(c => c.name === state.selectedColor)?.quantity ?? 0;
+      const selectedColorStock = state.selectedProduct.stock.find(c => c.color === state.selectedColor)?.qty ?? 0;
       if (state.quantity < selectedColorStock) {
         state.quantity += 1;
       }
@@ -74,19 +77,32 @@ const actionSlice = createSlice({
         (state.cart[existingItemIndex] as any).quantity += newItem.quantity;
       } else {
         // If item doesn't exist, add new item to cart
-        (state.cart as CartItem[]).push(newItem);
+        (state.cart as unknown as CartItem[]).push(newItem);
       }
 
       // Update product color quantity
-      const colorIndex = state.product.colors.findIndex(c => c.name === state.selectedColor);
-      state.product.colors[colorIndex].quantity -= state.quantity;
+      const colorIndex = state.selectedProduct.stock.findIndex(c => c.color === state.selectedColor);
+      state.selectedProduct.stock[colorIndex].qty -= state.quantity;
 
       // Reset quantity after adding to cart
       state.quantity = 1;
     },
     setSelectedProduct: (state, action) => {
       state.selectedProduct = action.payload;
-    }
+    },
+    clearCart: (state) => {
+      state.cart = [];
+    },
+    removeFromCart: (state, action) => {
+      state.cart = state.cart.filter(item => `${item.name}-${item.color}-${item.size}` !== action.payload);
+    },
+    updateCartItemQuantity: (state, action) => {
+      const { id, quantity } = action.payload;
+      const item = state.cart.find(item => item.id === id);
+      if (item) {
+        item.quantity = quantity;
+      }
+    },
   },
 });
 
@@ -96,7 +112,10 @@ export const {
   incrementQuantity, 
   decrementQuantity, 
   addToCart,
-  setSelectedProduct
+  setSelectedProduct,
+  clearCart,
+  removeFromCart,
+  updateCartItemQuantity
 } = actionSlice.actions;
 
 export default actionSlice.reducer;

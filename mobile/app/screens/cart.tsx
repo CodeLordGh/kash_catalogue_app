@@ -1,40 +1,71 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
+import { clearCart, removeFromCart, updateCartItemQuantity } from './actionSlice';
 
 interface CartItemProps {
-  title: string;
-  price: number;
+  id: string;
+  name: string;
+  color: string;
+  size: string;
   quantity: number;
-  imageSource: any;  // Using 'any' for simplicity, but ideally use a more specific type
-  onIncrement: () => void;
-  onDecrement: () => void;
+  price: number;
+  index: string;
+}
+interface CartItem {
+  id: string;
+  name: string;
+  color: string;
+  size: string;
+  quantity: number;
+  price: number;
+  index: string;
 }
 
-const CartItem: React.FC<CartItemProps> = ({ title, price, quantity, imageSource, onIncrement, onDecrement }) => (
-  <View style={styles.cartItem}>
-    <Image source={imageSource} style={styles.itemImage} />
-    <View style={styles.itemDetails}>
-      <Text style={styles.itemTitle}>{title}</Text>
-      <Text style={styles.itemPrice}>${price.toFixed(2)}</Text>
-      <View style={styles.quantityControl}>
-        <TouchableOpacity onPress={onDecrement} style={styles.quantityButton}>
-          <Text>-</Text>
-        </TouchableOpacity>
-        <Text style={styles.quantityText}>{quantity}</Text>
-        <TouchableOpacity onPress={onIncrement} style={styles.quantityButton}>
-          <Text>+</Text>
+const CartItem: React.FC<CartItemProps> = ({ id, name, color, size, quantity, price, index }) => {
+  const dispatch = useDispatch();
+
+  const handleRemove = () => {
+    dispatch(removeFromCart(`${name}-${color}-${size}`));
+  };
+
+  const handleIncrement = () => {
+    dispatch(updateCartItemQuantity({ id, quantity: quantity + 1 }));
+  };
+
+  const handleDecrement = () => {
+    if (quantity > 1) {
+      dispatch(updateCartItemQuantity({ id, quantity: quantity - 1 }));
+    }
+  };
+
+  return (
+    <View style={styles.cartItem}>
+      <View style={styles.itemDetails}>
+        <Text style={styles.itemTitle}>{name}</Text>
+        <Text style={styles.itemColor}>Color: {color}</Text>
+        <Text style={styles.itemSize}>Size: {size}</Text>
+        <View style={styles.quantityControl}>
+          <TouchableOpacity onPress={handleDecrement} style={styles.quantityButton}>
+            <Text>-</Text>
+          </TouchableOpacity>
+          <Text style={styles.quantityText}>{quantity}</Text>
+          <TouchableOpacity onPress={handleIncrement} style={styles.quantityButton}>
+            <Text>+</Text>
+          </TouchableOpacity>
+        </View>
+        <Text style={styles.itemPrice}>Price: ${(price * quantity).toFixed(2)}</Text>
+        <TouchableOpacity onPress={handleRemove} style={styles.removeButton}>
+          <Text style={styles.removeButtonText}>Remove</Text>
         </TouchableOpacity>
       </View>
     </View>
-  </View>
-);
+  );
+};
 
 const CartFragment: React.FC = () => {
-  // This would typically come from a state management solution or props
-  const cartItems = [
-    { id: 1, title: "Anime Figure A", price: 29.99, quantity: 2, imageSource: require('../../assets/images/downloa.jpeg') },
-    { id: 2, title: "Anime Figure B", price: 34.99, quantity: 1, imageSource: require('../../assets/images/download.jpeg') },
-  ];
+  const cartItems = useSelector((state: any) => state.action.cart) as CartItem[];
+  const dispatch = useDispatch();
 
   const totalPrice = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -42,15 +73,16 @@ const CartFragment: React.FC = () => {
     <View style={styles.container}>
       <Text style={styles.header}>Shopping Cart</Text>
       <ScrollView style={styles.cartList}>
-        {cartItems.map((item) => (
+        {cartItems.map((item, index) => (
           <CartItem
-            key={item.id}
-            title={item.title}
-            price={item.price}
+            key={`${item.name}-${item.color}-${item.size}-${index}`}
+            id={item.id}
+            name={item.name}
+            color={item.color}
+            size={item.size}
             quantity={item.quantity}
-            imageSource={item.imageSource}
-            onIncrement={() => console.log('Increment', item.id)}
-            onDecrement={() => console.log('Decrement', item.id)}
+            index={index}
+            price={item.price}
           />
         ))}
       </ScrollView>
@@ -61,9 +93,13 @@ const CartFragment: React.FC = () => {
       <TouchableOpacity style={styles.checkoutButton}>
         <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
       </TouchableOpacity>
+      <TouchableOpacity style={styles.clearCartButton} onPress={()=> dispatch(clearCart())}>
+        <Text style={styles.clearCartButtonText}>Clear Cart</Text>
+      </TouchableOpacity>
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -146,6 +182,27 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  clearCartButton: {
+    backgroundColor: 'red', // Change color as needed
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  clearCartButtonText: {
+    color: 'white',
+    fontSize: 16,
+  },
+  removeButton: {
+    backgroundColor: 'red',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  removeButtonText: {
+    color: 'white',
+    textAlign: 'center',
   },
 });
 

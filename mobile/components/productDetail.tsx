@@ -9,7 +9,7 @@ import { useNavigation } from '@react-navigation/native';
 const ProductDetails: React.FC = () => {
   const navigation = useNavigation()
   const dispatch = useDispatch();
-  const { product, selectedColor, selectedSize, quantity, selectedProduct } = useSelector((state:any) => state.action);
+  const { product, selectedColor, selectedSize, quantity, selectedProduct, cart } = useSelector((state:any) => state.action);
   
   const handleColorSelect = (color:any) => {
     dispatch(setSelectedColor(color));
@@ -29,6 +29,7 @@ const ProductDetails: React.FC = () => {
 
   const handleAddToCart = () => {
     dispatch(addToCart());
+    navigation.navigate("Cart")
   };
 
   return (

@@ -28,6 +28,7 @@ interface ItemCardProps {
     price: number;
     stock: string[];
     sizes: string[];
+    updatedAt: string;
   }
 }
 
@@ -59,7 +60,7 @@ const ItemCard: React.FC<ItemCardProps> = ({
 }) => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>()
   const dispatch = useDispatch()
-  // console.log(productId) 
+  // console.log(product.updatedAt) 
   return(
   <View style={styles.itemCard}>
     <Image source={imageSource} style={styles.itemImage} />
