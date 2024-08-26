@@ -7,7 +7,6 @@ import {
   StyleSheet,
   Alert,
 } from "react-native";
-import { Link } from "expo-router";
 import axios from "axios";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "./types";
@@ -133,6 +132,7 @@ const RegisterScreen = () => {
   };
 
   const componentRender = () => {
+    const navigation = useNavigation()
     switch (option) {
       case "storeId":
         return <StoreIdRegis storeId={storeId} setStoreId={setStoreId} />;
@@ -186,9 +186,9 @@ const RegisterScreen = () => {
 
         <View style={styles.signInContainer}>
           <Text>Already have an account? </Text>
-          <Link href={{ pathname: "/login" }}>
+          <TouchableOpacity onPressIn={()=> navigation.navigate("Login")}>
             <Text style={styles.signInText}>Sign In</Text>
-          </Link>
+          </TouchableOpacity>
         </View>
       </View>
       <View style={styles.footer}>

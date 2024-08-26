@@ -121,7 +121,10 @@ export const loginBuyer = async (input: string) => {
   
   const seller = await Seller.findById(associatedStore).select('-password -email -chatId -_id -phoneNumber -tokenBlacklist -fullName -customers -createdAt -updatedAt -__v');
   
-  const catalog = await Catalog.findById(seller?.catalog).select('-_id -createdAt -updatedAt -__v -seller');
+  const catalog = await Catalog.findById(seller?.catalog).select('-_id -createdAt -updatedAt -__v -seller').populate({
+    path: 'products',
+    select: '-__v'
+  });
   
   return {
     ...user.toObject(),

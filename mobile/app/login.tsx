@@ -12,8 +12,8 @@ import { RootStackParamList } from "./types";
 import { StackNavigationProp } from "@react-navigation/stack";
 import axios from "axios";
 import { storeToken } from "./token";
-import { useDispatch } from "react-redux";
-import { setCartProducts, setCatalogProducts, setChatId, setShop, setUserInfo } from "./screens/userSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { setCartProducts, setCatalogProducts, setChatId, setLoading, setShop, setUserInfo } from "./screens/userSlice";
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -22,16 +22,18 @@ const LoginScreen = () => {
   const [password, setPassword] = useState("");
   let result = {} as any;
   const [login, setLogin] = useState("")
-  const [loading, setLoading] = useState(false);
   const [option, setOption] = useState("buyer");
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const dispatch = useDispatch();
+
+  const cartProducts = useSelector((state:any) => state.user.cartProducts)
+  const loading = useSelector((state:any) => state.user.loading)
 
 
   const handleSignIn = async () => {
     if (option === "seller") {
       try {
-        setLoading(true);
+        dispatch(setLoading(true));
         await axios
           .post("https://czc9hkp8-3000.uks1.devtunnels.ms/api/seller/login", {
             email,
@@ -40,15 +42,16 @@ const LoginScreen = () => {
           .then((data) => {
             console.log(data.data)
             storeToken(data.data.accessToken/**, data.data.refreshToken, data.data.storeId */);
-            setLoading(false);
+            dispatch(setLoading(false));
             return navigation.replace("SellerMainScreen");
           });
       } catch (error) {
-        setLoading(false);
+        dispatch(setLoading(false));
         throw error;
       }
     } else if (option === "buyer") {
       try {
+        dispatch(setLoading(true));
         const response = await axios.post('https://czc9hkp8-3000.uks1.devtunnels.ms/api/login', { input: login });
         const data = response.data;
   
@@ -57,7 +60,7 @@ const LoginScreen = () => {
         dispatch(setCartProducts(data.user.cart));
         dispatch(setCatalogProducts(data.user.catalog.products));
         dispatch(setUserInfo({
-          buyerId: data.user.buyerId,
+          userId: data.user.buyerId,
           fullName: data.user.fullName,
           email: data.user.email,
           phoneNumber: data.user.phoneNumber,
@@ -66,10 +69,12 @@ const LoginScreen = () => {
           businessName: data.user.seller.businessName,
           storeId: data.user.seller.storeId,
         }));
-        console.log(data.user.catalog.products)
+        dispatch(setLoading(false));
+        // console.log(data.user.chatId)
         return navigation.navigate("BuyerMainScreen");
-      } catch (error) {
-        setLoading(false);
+      } catch (error:any) {
+        // console.log(error);
+        dispatch(setLoading(false));
         Alert.alert("Error logging in", "Please check your credentials and try again.");
       }
     }

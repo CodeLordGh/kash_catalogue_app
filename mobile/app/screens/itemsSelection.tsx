@@ -1,17 +1,34 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Image, TouchableOpacity, ImageSourcePropType } from 'react-native';
-import { useSelector } from 'react-redux';
+import { NavigationProp, useNavigation } from "@react-navigation/native";
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  Image,
+  TouchableOpacity,
+  ImageSourcePropType,
+} from "react-native";
+import { useDispatch, useSelector } from "react-redux";
+import { RootStackParamList } from "../types";
+import { setSelectedProduct } from "./actionSlice";
 
 // Define interfaces for component props
 interface HeaderProps {}
 
 interface SearchBarProps {}
 
+type RouteName = 'ProductPage' | 'OtherRoute' | 'AnotherRoute';
+
 interface ItemCardProps {
-  title: string;
-  price: number;
   imageSource: ImageSourcePropType;
-  colors: string[];
+  product: {
+    _id: string;
+    name: string;
+    price: number;
+    stock: string[];
+    sizes: string[];
+  }
 }
 
 interface CartSummaryItemProps {
@@ -19,39 +36,52 @@ interface CartSummaryItemProps {
   price: number;
 }
 
-const Header: React.FC<HeaderProps> = () => (
+const Header: React.FC<HeaderProps> = () => {
+  const shop = useSelector((state:any) => state.user.shop)
+ return (
   <View style={styles.header}>
-    <Text style={styles.headerTitle}>Item Selection</Text>
-    <TouchableOpacity style={styles.settingsButton}>
-      <Text>⚙️</Text>
-    </TouchableOpacity>
-  </View>
-);
-
+      <Text style={styles.headerTitle}>{`${shop.businessName} shop`}</Text>
+      <TouchableOpacity style={styles.settingsButton}>
+        <Text>⚙️</Text>
+      </TouchableOpacity>
+    </View>
+  ); 
+}
 const SearchBar: React.FC<SearchBarProps> = () => (
   <View style={styles.searchBar}>
-    <TextInput 
-      style={styles.searchInput}
-      placeholder="Search for items..."
-    />
+    <TextInput style={styles.searchInput} placeholder="Search for items..." />
   </View>
 );
 
-const ItemCard: React.FC<ItemCardProps> = ({ title, price, imageSource, colors }) => (
+const ItemCard: React.FC<ItemCardProps> = ({
+  product,
+  imageSource,
+}) => {
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>()
+  const dispatch = useDispatch()
+  // console.log(productId) 
+  return(
   <View style={styles.itemCard}>
     <Image source={imageSource} style={styles.itemImage} />
-    <Text style={styles.itemTitle}>{title}</Text>
-    <Text style={styles.itemPrice}>${price.toFixed(2)}</Text>
-    <TouchableOpacity style={styles.addToCartButton}>
+    <Text style={styles.itemTitle}>{product.name}</Text>
+    <Text style={styles.itemPrice}>${product.price.toFixed(2)}</Text>
+    <TouchableOpacity style={styles.addToCartButton} onPressIn={()=> {
+      dispatch(setSelectedProduct(product))
+      navigation.navigate("ProductPage")
+    }}>
       <Text style={styles.addToCartText}>Add to Cart</Text>
     </TouchableOpacity>
     <View style={styles.colorOptions}>
-      {colors.map((color, index) => (
-        <TouchableOpacity key={index} style={[styles.colorOption, { backgroundColor: color }]} />
+      <Text style={{textAlign: "left"}}>colors:</Text>
+      {product.stock.map((color:any, index) => (
+        <TouchableOpacity
+          key={index}
+          style={[styles.colorOption, { backgroundColor: color.color }]}
+        />
       ))}
     </View>
   </View>
-);
+)}
 
 const CartSummaryItem: React.FC<CartSummaryItemProps> = ({ item, price }) => (
   <View style={styles.cartSummaryItem}>
@@ -63,33 +93,35 @@ const CartSummaryItem: React.FC<CartSummaryItemProps> = ({ item, price }) => (
   </View>
 );
 
-const checkout = () => {  
-
+const checkout = () => {
   return (
     <View style={styles.checkoutSection}>
-        <Text style={styles.checkoutTitle}>Checkout</Text>
-        <CartSummaryItem item="Red T-shirt, Size M" price={25} />
-        <CartSummaryItem item="Blue Jeans, Size 32" price={45} />
-      </View>
-  )
-}
+      <Text style={styles.checkoutTitle}>Checkout</Text>
+      <CartSummaryItem item="Red T-shirt, Size M" price={25} />
+      <CartSummaryItem item="Blue Jeans, Size 32" price={45} />
+    </View>
+  );
+};
 
 const ItemSelectionFragment: React.FC = () => {
-  const catalogProducts = useSelector((state:any) => state.user.catalogProducts);
+  const catalogProducts = useSelector(
+    (state: any) => state.user.catalogProducts
+  );
 
-  console.log(catalogProducts)
+  console.log(catalogProducts[0]);
 
   return (
     <View style={styles.container}>
       <Header />
       <SearchBar />
       <View style={styles.itemsContainer}>
-        <ItemCard 
-          title="Anime Figure A" 
-          price={29.99} 
-          imageSource={require('../../assets/images/downloa.jpeg')}
-          colors={['red', 'blue', 'green']}
-        />
+        {catalogProducts.map((product: any) => (
+          <ItemCard
+            key={product._id}
+            product={product}
+            imageSource={require("../../assets/images/downloa.jpeg")}
+          />
+        ))}
       </View>
     </View>
   );
@@ -98,20 +130,20 @@ const ItemSelectionFragment: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   content: {
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 10,
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   settingsButton: {
     padding: 5,
@@ -121,41 +153,43 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 5,
     padding: 10,
   },
   itemsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "flex-start",
     padding: 10,
   },
   itemCard: {
-    alignItems: 'center',
-    width: '45%',
+    alignItems: "center",
+    width: "45%",
   },
   itemImage: {
     width: 100,
     height: 100,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
   itemTitle: {
     marginTop: 5,
+    textAlign: "center",
+    paddingHorizontal: 10
   },
   itemPrice: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   addToCartButton: {
-    backgroundColor: '#6200ee',
+    backgroundColor: "#6200ee",
     padding: 5,
     borderRadius: 5,
     marginTop: 5,
   },
   addToCartText: {
-    color: 'white',
+    color: "white",
   },
   colorOptions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginTop: 5,
   },
   colorOption: {
@@ -169,22 +203,22 @@ const styles = StyleSheet.create({
   },
   checkoutTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 10,
   },
   cartSummaryItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 5,
   },
   editButton: {
-    backgroundColor: '#6200ee',
+    backgroundColor: "#6200ee",
     padding: 5,
     borderRadius: 5,
   },
   editButtonText: {
-    color: 'white',
+    color: "white",
   },
 });
 

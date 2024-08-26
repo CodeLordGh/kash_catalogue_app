@@ -2,7 +2,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface UserInfo {
-  buyerId: string;
+  userId: string;
   fullName?: string;
   email?: string;
   phoneNumber?: string;
@@ -17,6 +17,7 @@ interface UserState {
     businessName: string;
     storeId: string;
   };
+  loading: boolean;
 }
 
 const initialState: UserState = {
@@ -24,12 +25,13 @@ const initialState: UserState = {
   cartProducts: [],
   catalogProducts: [],
   userInfo: {
-    buyerId: '',
+    userId: '',
   },
   shop: {
     businessName: '',
     storeId: '',
   },
+  loading: false
 };
 
 const userSlice = createSlice({
@@ -51,8 +53,11 @@ const userSlice = createSlice({
     setShop: (state, action: PayloadAction<{ businessName: string; storeId: string }>) => {
       state.shop = action.payload;
     },
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.loading = action.payload
+    }
   },
 });
 
-export const { setChatId, setCartProducts, setCatalogProducts, setUserInfo, setShop } = userSlice.actions;
+export const { setChatId, setCartProducts, setCatalogProducts, setUserInfo, setShop, setLoading } = userSlice.actions;
 export default userSlice.reducer;
