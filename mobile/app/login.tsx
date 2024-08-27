@@ -35,7 +35,7 @@ const LoginScreen = () => {
       try {
         dispatch(setLoading(true));
         await axios
-          .post("https://czc9hkp8-3000.uks1.devtunnels.ms/api/seller/login", {
+          .post("https://vendex-9taw.onrender.com/api/seller/login", {
             email,
             password,
           })
@@ -52,7 +52,7 @@ const LoginScreen = () => {
     } else if (option === "buyer") {
       try {
         dispatch(setLoading(true));
-        const response = await axios.post('https://czc9hkp8-3000.uks1.devtunnels.ms/api/login', { input: login });
+        const response = await axios.post('https://vendex-9taw.onrender.com/api/login', { input: login });
         const data = response.data;
   
         // Dispatch actions to update the Redux store

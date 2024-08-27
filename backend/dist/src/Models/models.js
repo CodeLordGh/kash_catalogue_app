@@ -23,26 +23,26 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Payment = exports.Order = exports.Catalog = exports.Product = exports.DeliveryAddress = exports.Buyer = exports.Seller = void 0;
+exports.Message = exports.Payment = exports.Order = exports.Catalog = exports.Product = exports.DeliveryAddress = exports.Buyer = exports.Seller = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const SellerSchema = new mongoose_1.Schema({
     fullName: { type: String, required: true },
     refreshToken: { type: String },
     tokenBlacklist: [],
     businessName: { type: String, required: true },
-    phoneNumber: { type: String },
+    phoneNumber: { type: String, sparse: true },
     password: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     storeId: { type: String, required: true, unique: true },
     catalog: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Catalog' },
     customers: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'Buyer' }],
-    deliveryAddresses: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'DeliveryAddress' }]
+    deliveryAddresses: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'DeliveryAddress' }],
+    chatId: [{ type: String }]
 }, { timestamps: true });
 exports.Seller = mongoose_1.default.model('Seller', SellerSchema);
 const BuyerSchema = new mongoose_1.Schema({
     fullName: { type: String },
-    buyerId: { type: String },
-    phoneNumber: { type: String, unique: true },
+    buyerId: { type: String, unique: true },
     serviceProvider: { type: String },
     cart: [{
             product: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Product' },
@@ -52,8 +52,10 @@ const BuyerSchema = new mongoose_1.Schema({
             }
         }],
     orders: [{ type: mongoose_1.Schema.Types.ObjectId, ref: "Order" }],
-    associatedStores: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'Seller' }]
+    associatedStores: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'Seller' }],
+    chatId: { type: String }
 }, { timestamps: true });
+BuyerSchema.index({ phoneNumber: 1, buyerId: 1 }, { unique: true, sparse: true });
 exports.Buyer = mongoose_1.default.model('Buyer', BuyerSchema);
 const DeliveryAddressSchema = new mongoose_1.Schema({
     seller: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Seller', required: true },
@@ -103,3 +105,12 @@ const PaymentSchema = new mongoose_1.Schema({
     paymentMethod: { type: String, required: true }
 }, { timestamps: true });
 exports.Payment = mongoose_1.default.model('Payment', PaymentSchema);
+const MessageSchema = new mongoose_1.Schema({
+    sender: { type: mongoose_1.Schema.Types.ObjectId, required: true, refPath: 'senderModel' },
+    receiver: { type: mongoose_1.Schema.Types.ObjectId, required: true, refPath: 'receiverModel' },
+    message: { type: String, required: true },
+    timestamp: { type: Date, default: Date.now },
+    senderModel: { type: String, required: true, enum: ['Seller', 'Buyer'] },
+    receiverModel: { type: String, required: true, enum: ['Seller', 'Buyer'] },
+}, { timestamps: true });
+exports.Message = mongoose_1.default.model('Message', MessageSchema);

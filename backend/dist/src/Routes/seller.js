@@ -12,6 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.generateAccessToken = generateAccessToken;
 const express_1 = __importDefault(require("express"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -66,7 +67,7 @@ router.post('/seller/login', (req, res) => __awaiter(void 0, void 0, void 0, fun
         const refreshToken = jsonwebtoken_1.default.sign({ id: seller._id }, REFRESH_TOKEN_SECRET, { expiresIn: '30d' });
         seller.refreshToken = refreshToken;
         yield seller.save();
-        res.json({ accessToken, refreshToken });
+        res.json({ accessToken, refreshToken, storeId: seller.storeId });
     }
     catch (error) {
         res.status(500).json({ message: 'Error logging in', error });
