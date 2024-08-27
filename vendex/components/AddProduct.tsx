@@ -40,7 +40,7 @@ const AddProduct = () => {
 
       await axios
         .post(
-          "https://czc9hkp8-3000.uks1.devtunnels.ms/api/product",
+          "https://vendex-9taw.onrender.com/api/product",
           {
             stock: products,
             description: description,

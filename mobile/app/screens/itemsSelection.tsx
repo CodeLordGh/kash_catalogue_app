@@ -79,6 +79,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ product, imageSource }) => {
         style={styles.addToCartButton}
         onPress={() => {
           dispatch(setSelectedProduct(product));
+          console.log(product)
           navigation.navigate("ProductPage");
         }}
       >
@@ -101,7 +102,7 @@ const ItemSelectionFragment: React.FC = () => {
   const catalogProducts = useSelector((state: any) => state.user.catalogProducts);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <Header />
       <View style={styles.content}>
         <SearchBar />
@@ -118,7 +119,7 @@ const ItemSelectionFragment: React.FC = () => {
           contentContainerStyle={styles.itemsContainer}
         />
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 

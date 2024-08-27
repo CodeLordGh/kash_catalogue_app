@@ -101,7 +101,7 @@ const RegisterScreen = () => {
         // Register with storeId
         setisLoading(true);
         await axios
-          .post("https://vendex-9taw.onrender.com/api/register", {
+          .post("https://czc9hkp8-3000.uks1.devtunnels.ms/api/register", {
             storeId: storeId,
           })
           .then((response) => {
@@ -113,7 +113,7 @@ const RegisterScreen = () => {
         // Register as a seller
         setisLoading(true);
         await axios
-          .post("https://vendex-9taw.onrender.com/api/seller/register", {
+          .post("https://czc9hkp8-3000.uks1.devtunnels.ms/seller/register", {
             fullName: fullName,
             businessName: busynessName,
             email: email,

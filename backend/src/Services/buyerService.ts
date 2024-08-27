@@ -97,6 +97,7 @@ interface ISeller {
 
 
 export const loginBuyer = async (input: string) => {
+  console.log("frontend data input is ",input)
   const user = await Buyer.findOne({ buyerId: input }).populate({
     path: 'cart.product',
     select: '-__v'

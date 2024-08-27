@@ -8,8 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 const ProductDetails: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const { selectedColor, selectedSize, quantity, selectedProduct } = useSelector((state:any) => state.action);
-  console.log(selectedProduct.sizes)
+  const { product, selectedColor, selectedSize, quantity, selectedProduct } = useSelector((state:any) => state.action);
   
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
@@ -74,7 +73,7 @@ const ProductDetails: React.FC = () => {
 
           <Text style={styles.sectionTitle}>Size</Text>
           <View style={styles.optionsContainer}>
-            {selectedProduct.sizes ? selectedProduct.sizes.map((size:string) => (
+            {product.sizes.map((size:string) => (
               <TouchableOpacity
                 key={size}
                 style={[
@@ -85,8 +84,7 @@ const ProductDetails: React.FC = () => {
               >
                 <Text style={[styles.optionButtonText, selectedSize === size && styles.selectedOptionButtonText]}>{size}</Text>
               </TouchableOpacity>
-            )) : (<Text style={{color: "white"}}>Size not available! Contact <TouchableOpacity style={{ backgroundColor: "green", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 50}} onPress={() => navigation.navigate("Chat")}><Text style={{color: "white"}}>Vendor</Text></TouchableOpacity></Text>)
-            }
+            ))}
           </View>
 
           <Text style={styles.sectionTitle}>Color</Text>
@@ -120,7 +118,7 @@ const ProductDetails: React.FC = () => {
           <View style={styles.footer}>
             <View>
               <Text style={styles.totalPriceLabel}>TOTAL PRICE</Text>
-              <Text style={styles.totalPriceValue}>${(selectedProduct.price * quantity).toFixed(2)}</Text>
+              <Text style={styles.totalPriceValue}>${(product.price * quantity).toFixed(2)}</Text>
             </View>
             <TouchableOpacity style={styles.addToCartButton} onPress={handleAddToCart}>
               <Text style={styles.addToCartButtonText}>ADD TO CART</Text>
