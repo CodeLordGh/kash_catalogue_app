@@ -77,7 +77,7 @@ const MessageItem = ({
 const Messages = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const userId = useSelector((state:any) => state.user.userInfo.userId)
-
+  const navigation = useNavigation()
 
   useEffect(() => {
     const chatRef = ref(database, "chats");
@@ -97,7 +97,7 @@ const Messages = () => {
             return chat.buyerId === userId
           }
         ) as any;
-        // if(filteredMessages.length < 2) useNavigation().navigate("Chat") 
+        // console.log(filteredMessages.length)
         setMessages(filteredMessages);
       }
     });

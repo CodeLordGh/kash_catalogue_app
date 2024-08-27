@@ -60,6 +60,7 @@ const LoginScreen = () => {
         dispatch(setCartProducts(data.user.cart));
         dispatch(setCatalogProducts(data.user.catalog.products));
         dispatch(setUserInfo({
+          User: data.user.type,
           userId: data.user.buyerId,
           fullName: data.user.fullName,
           email: data.user.email,
@@ -70,7 +71,7 @@ const LoginScreen = () => {
           storeId: data.user.seller.storeId,
         }));
         dispatch(setLoading(false));
-        // console.log(data.user.chatId)
+        // console.log(data.user.type)
         return navigation.navigate("BuyerMainScreen");
       } catch (error:any) {
         // console.log(error);

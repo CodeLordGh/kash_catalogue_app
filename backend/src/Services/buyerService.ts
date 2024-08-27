@@ -129,6 +129,7 @@ export const loginBuyer = async (input: string) => {
   return {
     ...user.toObject(),
     seller,
+    type: 'User',
     catalog
   };
 };

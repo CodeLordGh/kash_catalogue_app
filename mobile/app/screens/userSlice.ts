@@ -2,6 +2,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface UserInfo {
+  User: string;
   userId: string;
   fullName?: string;
   email?: string;
@@ -26,6 +27,7 @@ const initialState: UserState = {
   catalogProducts: [],
   userInfo: {
     userId: '',
+    User: '',
   },
   shop: {
     businessName: '',

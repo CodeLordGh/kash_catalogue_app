@@ -87,11 +87,11 @@ const AddProduct = () => {
 
           <View style={styles.imageContainer}>
           <Image
-            source={require("../assets/images/download.jpeg")}
+            source={require("../assets/images/download.png")}
             style={styles.image}
           />
           <Image
-            source={require("../assets/images/downloa.jpeg")}
+            source={require("../assets/images/downloa.png")}
             style={styles.image}
           />
         </View>

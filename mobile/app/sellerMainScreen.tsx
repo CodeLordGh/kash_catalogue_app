@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 const Tab = createBottomTabNavigator();
 
 const SellerMainScreen = () => {
+  
   return (
     <Tab.Navigator initialRouteName='Dashboard' screenOptions={{ headerShown: false }}>
       <Tab.Screen name="Dashboard" component={SellerDashboard} options={{

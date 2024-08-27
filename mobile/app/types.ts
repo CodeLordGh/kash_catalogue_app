@@ -5,7 +5,7 @@ export type RootStackParamList = {
     BuyerMainScreen: undefined;
     SellerMainScreen: undefined;
     Chat: undefined;
-    ProductPage: undefined
+    ProductPage: undefined,
   };
 
   export type ChatParamList = {

@@ -1,37 +1,37 @@
 import { Ionicons } from "@expo/vector-icons";
-import { RouteProp, useNavigation } from "@react-navigation/native";
 import React, { useState, useEffect } from "react";
 import { StyleSheet, View, TouchableOpacity } from "react-native";
 import { GiftedChat } from 'react-native-gifted-chat';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ref, onChildAdded } from 'firebase/database';
-import { ChatParamList } from "@/app/types"; // Adjust the import path as necessary
 import { database } from "./firebase"; // Adjust the import based on your structure
 import { IMessage as GiftedChatIMessage } from "react-native-gifted-chat";
 import { retrieveToken } from "./token";
 import axios from "axios";
-
-
-type ChatRouteProp = RouteProp<ChatParamList, 'Chat'>;
+import { useSelector } from "react-redux"; // Import useSelector
+import { useNavigation } from "@react-navigation/native";
 
 // Define the IMessage interface
 interface IMessage extends GiftedChatIMessage {}
 
-const Chat = ({ route }: { route: ChatRouteProp }) => {
+const Chat: React.FC = () => {
   const [messages, setMessages] = useState<IMessage[]>([]);
-  const navigation = useNavigation();
-  const { currentUser, buyerId } = route.params;
-  const [auth, setAuth] = useState("")
+  const [auth, setAuth] = useState("");
+  const navigation = useNavigation()
 
+  // Access currentUser from Redux store
+  const currentUser = useSelector((state: any) => state.user.userInfo.userId); // Adjust the state path based on your store structure
+  console.log(currentUser)
   const _auth = async () => await retrieveToken();
-_auth().then((auth:any) => {
-  setAuth(auth);
-});
+  _auth().then((auth: any) => {
+    setAuth(auth);
+  });
 
   useEffect(() => {
-    const chatId = currentUser.id
+    if (!currentUser) return; // Ensure currentUser is available
+    const chatId = currentUser.id;
     const chatRef = ref(database, `chats/${chatId}/messages`);
-  
+
     const unsubscribe = onChildAdded(chatRef, (snapshot) => {
       const message = snapshot.val();
       console.log(message.message);
@@ -50,12 +50,12 @@ _auth().then((auth:any) => {
         );
       }
     });
-  
+
     // Clean up the listener
     return () => unsubscribe();
-  }, [currentUser.id]);
+  }, [currentUser]);
 
-  const handleSend = async (newMessages:IMessage[]) => {
+  const handleSend = async (newMessages: IMessage[]) => {
     const { text } = newMessages[0];
 
     try {
@@ -68,7 +68,7 @@ _auth().then((auth:any) => {
           'Authorization': `Bearer ${auth}`,
         },
       });
-        console.log(response.data)
+      console.log(response.data);
     } catch (error) {
       console.error('Error sending message:', error);
     }

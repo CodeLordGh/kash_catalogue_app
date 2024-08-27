@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, SafeAreaView } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { clearCart, removeFromCart, updateCartItemQuantity } from './actionSlice';
+import { removeFromCart, updateCartItemQuantity } from './actionSlice';
+import { Ionicons } from '@expo/vector-icons';
 
 interface CartItemProps {
   id: string;
@@ -10,79 +11,73 @@ interface CartItemProps {
   size: string;
   quantity: number;
   price: number;
-  index: string;
-}
-interface CartItem {
-  id: string;
-  name: string;
-  color: string;
-  size: string;
-  quantity: number;
-  price: number;
-  index: string;
+  index: number;
 }
 
-const CartItem: React.FC<CartItemProps> = ({ id, name, color, size, quantity, price, index }) => {
+const CartItem: React.FC<CartItemProps> = ({ id, name, color, size, quantity, price }) => {
   const dispatch = useDispatch();
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, []);
 
   const handleRemove = () => {
     dispatch(removeFromCart(`${name}-${color}-${size}`));
   };
-
+  const cartItemId = `${name}-${color}-${size}`
   const handleIncrement = () => {
-    dispatch(updateCartItemQuantity({ id, quantity: quantity + 1 }));
+    dispatch(updateCartItemQuantity({ cartItemId, quantity: quantity + 1 }));
   };
 
   const handleDecrement = () => {
     if (quantity > 1) {
-      dispatch(updateCartItemQuantity({ id, quantity: quantity - 1 }));
+      dispatch(updateCartItemQuantity({ cartItemId, quantity: quantity - 1 }));
     }
   };
 
   return (
-    <View style={styles.cartItem}>
+    <Animated.View style={[styles.cartItem, { opacity: fadeAnim }]}>
       <View style={styles.itemDetails}>
         <Text style={styles.itemTitle}>{name}</Text>
-        <Text style={styles.itemColor}>Color: {color}</Text>
-        <Text style={styles.itemSize}>Size: {size}</Text>
-        <View style={styles.quantityControl}>
-          <TouchableOpacity onPress={handleDecrement} style={styles.quantityButton}>
-            <Text>-</Text>
-          </TouchableOpacity>
-          <Text style={styles.quantityText}>{quantity}</Text>
-          <TouchableOpacity onPress={handleIncrement} style={styles.quantityButton}>
-            <Text>+</Text>
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.itemPrice}>Price: ${(price * quantity).toFixed(2)}</Text>
-        <TouchableOpacity onPress={handleRemove} style={styles.removeButton}>
-          <Text style={styles.removeButtonText}>Remove</Text>
+        <Text style={styles.itemSubtitle}>Color: {color} | Size: {size}</Text>
+        <Text style={styles.itemPrice}>${(price * quantity).toFixed(2)}</Text>
+      </View>
+      <View style={styles.quantityControl}>
+        <TouchableOpacity onPress={handleDecrement} style={styles.quantityButton}>
+          <Ionicons name="remove" size={20} color="#007AFF" />
+        </TouchableOpacity>
+        <Text style={styles.quantityText}>{quantity}</Text>
+        <TouchableOpacity onPress={handleIncrement} style={styles.quantityButton}>
+          <Ionicons name="add" size={20} color="#007AFF" />
         </TouchableOpacity>
       </View>
-    </View>
+      <TouchableOpacity onPress={handleRemove} style={styles.removeButton}>
+        <Ionicons name="trash-outline" size={24} color="#FF3B30" />
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 
 const CartFragment: React.FC = () => {
-  const cartItems = useSelector((state: any) => state.action.cart) as CartItem[];
+  const cartItems = useSelector((state: any) => state.action.cart);
   const dispatch = useDispatch();
 
-  const totalPrice = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const totalPrice = cartItems.reduce((sum: number, item: CartItemProps) => sum + item.price * item.quantity, 0);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Text style={styles.header}>Shopping Cart</Text>
       <ScrollView style={styles.cartList}>
-        {cartItems.map((item, index) => (
+        {cartItems.map((item: CartItemProps, index: number) => (
           <CartItem
             key={`${item.name}-${item.color}-${item.size}-${index}`}
-            id={item.id}
-            name={item.name}
-            color={item.color}
-            size={item.size}
-            quantity={item.quantity}
+            {...item}
             index={index}
-            price={item.price}
           />
         ))}
       </ScrollView>
@@ -93,69 +88,78 @@ const CartFragment: React.FC = () => {
       <TouchableOpacity style={styles.checkoutButton}>
         <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.clearCartButton} onPress={()=> dispatch(clearCart())}>
+      {/* <TouchableOpacity style={styles.clearCartButton} onPress={() => dispatch(clearCart())}>
         <Text style={styles.clearCartButtonText}>Clear Cart</Text>
-      </TouchableOpacity>
-    </View>
+      </TouchableOpacity> */}
+    </SafeAreaView>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    padding: 15,
+    backgroundColor: '#6200EE',
   },
   header: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
+    textAlign: "center",
+    color: '#fff',
     marginBottom: 20,
   },
   cartList: {
     flex: 1,
+    backgroundColor: '#151515',
+    borderBottomLeftRadius: 30,
+    borderTopRightRadius: 30,
+    padding: 15,
+    marginHorizontal:5
   },
   cartItem: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    paddingVertical: 15,
-  },
-  itemImage: {
-    width: 80,
-    height: 80,
-    resizeMode: 'contain',
-    marginRight: 15,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#222',
+    borderRadius: 15,
+    padding: 15,
+    marginBottom: 15,
   },
   itemDetails: {
     flex: 1,
-    justifyContent: 'center',
   },
   itemTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 5,
+  },
+  itemSubtitle: {
+    fontSize: 14,
+    color: '#999',
+    marginBottom: 5,
   },
   itemPrice: {
-    fontSize: 14,
-    color: '#888',
-    marginVertical: 5,
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#007AFF',
   },
   quantityControl: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#333',
+    borderRadius: 20,
+    padding: 5,
   },
   quantityButton: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 5,
   },
   quantityText: {
-    marginHorizontal: 10,
+    color: '#fff',
     fontSize: 16,
+    marginHorizontal: 10,
+  },
+  removeButton: {
+    marginLeft: 15,
   },
   totalSection: {
     flexDirection: 'row',
@@ -164,45 +168,37 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   totalText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
+    color: '#fff',
   },
   totalPrice: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#6200ee',
+    color: '#007AFF',
   },
   checkoutButton: {
-    backgroundColor: '#6200ee',
+    backgroundColor: '#007AFF',
     paddingVertical: 15,
-    borderRadius: 5,
+    borderRadius: 10,
     alignItems: 'center',
+    marginBottom: 10,
   },
   checkoutButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   clearCartButton: {
-    backgroundColor: 'red', // Change color as needed
-    padding: 10,
-    borderRadius: 5,
+    backgroundColor: '#FF3B30',
+    paddingVertical: 15,
+    borderRadius: 10,
     alignItems: 'center',
-    marginTop: 10,
   },
   clearCartButtonText: {
     color: 'white',
-    fontSize: 16,
-  },
-  removeButton: {
-    backgroundColor: 'red',
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 10,
-  },
-  removeButtonText: {
-    color: 'white',
-    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 
