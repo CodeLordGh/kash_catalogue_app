@@ -1,3 +1,4 @@
+import { setLoading } from "@/app/screens/userSlice";
 import { retrieveToken } from "@/app/token";
 import axios from "axios";
 import React, { useState } from "react";
@@ -12,6 +13,7 @@ import {
   Button,
   Alert,
 } from "react-native";
+import { useDispatch, useSelector } from "react-redux";
 
 const AddProduct = () => {
   const [color, setColor] = useState("");
@@ -22,8 +24,9 @@ const AddProduct = () => {
   const [products, setProducts] = useState<{ color: string; qty: string }[]>(
     []
   );
-  const [isLoading, setIsLoading] = useState(false);
-
+  const loading = useSelector((state:any) => state.user.loading)
+  const dispatch = useDispatch()
+const token = useSelector((state:any) => state.user.userInfo.userAuth)
   const handleAddProduct = () => {
     if (color || qty) {
       setProducts([...products, { color, qty }]);
@@ -33,10 +36,10 @@ const AddProduct = () => {
   };
 
   const handlePupblish = async () => {
-    const token = await retrieveToken();
+    
     // console.log(token)
     try {
-      setIsLoading(true);
+      dispatch(setLoading(true));
 
       await axios
         .post(
@@ -58,12 +61,13 @@ const AddProduct = () => {
           setPrice("");
           setDescription("");
           setProducts([]);
-          setIsLoading(false);
+          dispatch(setLoading(false));
           // console.log(data.data);
           Alert.alert(data.data.message);
         });
     } catch (er: any) {
-      setIsLoading(false);
+      console.log(er.response);
+      dispatch(setLoading(false));
       Alert.alert("Error adding product!");
     }
   };
@@ -157,7 +161,7 @@ const AddProduct = () => {
           onPress={() => handlePupblish()}
         >
           <Text style={styles.publishButtonText}>
-            {isLoading ? "Publishing..." : "Publish"}
+            {loading ? "Publishing..." : "Publish"}
           </Text>
         </TouchableOpacity>
         </ScrollView>

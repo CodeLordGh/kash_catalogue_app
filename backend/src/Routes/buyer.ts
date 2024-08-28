@@ -20,11 +20,11 @@ interface CustomRequest extends express.Request {
 const router = express.Router();
 
 // Middleware to extract buyerId from headers or query params
-const extractBuyerId = (req: CustomRequest, res: express.Response, next: express.NextFunction) => {
+const extractedId = (req: CustomRequest, res: express.Response, next: express.NextFunction) => {
   const buyerId = req.headers['buyer-id'] as string || req.query.buyerId as string;
 
   if (!buyerId) {
-    return res.status(400).json({ message: 'Buyer ID is required' });
+    return res.status(400).json({ message: 'User ID is required' });
   }
   req.buyerId = buyerId;
   next();
@@ -35,7 +35,7 @@ router.post("/login", async (req, res) => {
   const { input } = req.body;
   const user = await loginBuyer(input);
 
-  const accessToken = generateAccessToken(user.buyerId);
+  const accessToken = generateAccessToken(user._id);
 
   res.status(200).json({user, accessToken});
 })
@@ -53,7 +53,7 @@ router.post('/register', async (req, res) => {
 });
 
 // Update buyer profile
-router.put('/profile', extractBuyerId, async (req:CustomRequest , res) => {
+router.put('/profile', async (req:CustomRequest , res) => {
   try {
     const { fullName, phoneNumber } = req.body;
     await updateBuyerProfile(req.buyerId? req.buyerId: "", fullName, phoneNumber);
@@ -64,7 +64,7 @@ router.put('/profile', extractBuyerId, async (req:CustomRequest , res) => {
 }); 
 
 // View catalog
-router.get('/catalog/:storeId', extractBuyerId, async (req:CustomRequest, res) => {
+router.get('/catalog/:storeId', async (req:CustomRequest, res) => {
   try {
     const { storeId } = req.params;
     const catalog = await viewCatalog(req.buyerId? req.buyerId: "", storeId);
@@ -75,7 +75,7 @@ router.get('/catalog/:storeId', extractBuyerId, async (req:CustomRequest, res) =
 });
 
 // Add to cart
-router.post('/cart', extractBuyerId, async (req:CustomRequest, res) => {
+router.post('/cart', async (req:CustomRequest, res) => {
   try {
     const { productId, quantity } = req.body;
     await addToCart(req.buyerId? req.buyerId: "", productId, quantity);
@@ -86,7 +86,7 @@ router.post('/cart', extractBuyerId, async (req:CustomRequest, res) => {
 });
 
 // Remove from cart
-router.delete('/cart/:productId', extractBuyerId, async (req:CustomRequest, res) => {
+router.delete('/cart/:productId', async (req:CustomRequest, res) => {
   try {
     const { productId } = req.params;
     await removeFromCart(req.buyerId? req.buyerId: "", productId);
@@ -97,7 +97,7 @@ router.delete('/cart/:productId', extractBuyerId, async (req:CustomRequest, res)
 });
 
 // View cart
-router.get('/cart', extractBuyerId, async (req:CustomRequest, res) => {
+router.get('/cart', async (req:CustomRequest, res) => {
   try {
     const cart = await viewCart(req.buyerId? req.buyerId: "");
     res.status(200).json(cart);
@@ -107,7 +107,7 @@ router.get('/cart', extractBuyerId, async (req:CustomRequest, res) => {
 });
 
 // Create order
-router.post('/order', extractBuyerId, async (req:CustomRequest, res) => {
+router.post('/order', async (req:CustomRequest, res) => {
   try {
     const { deliveryAddress } = req.body;
     const result = await createOrder(req.buyerId? req.buyerId: "", deliveryAddress);
@@ -118,7 +118,7 @@ router.post('/order', extractBuyerId, async (req:CustomRequest, res) => {
 });
 
 // Get order history
-router.get('/orders', extractBuyerId, async (req:CustomRequest, res) => {
+router.get('/orders', async (req:CustomRequest, res) => {
   try {
     const orders = await getOrderHistory(req.buyerId? req.buyerId: "");
     res.status(200).json(orders);
@@ -128,7 +128,7 @@ router.get('/orders', extractBuyerId, async (req:CustomRequest, res) => {
 });
 
 // Get order details
-router.get('/orders/:orderId', extractBuyerId, async (req:CustomRequest, res) => {
+router.get('/orders/:orderId', async (req:CustomRequest, res) => {
   try {
     const { orderId } = req.params;
     const orderDetails = await getOrderDetails(req.buyerId? req.buyerId: "", orderId);

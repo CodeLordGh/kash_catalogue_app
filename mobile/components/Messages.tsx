@@ -89,12 +89,12 @@ const Messages = () => {
           _id: key,
           ...data[key],
         }));
-        console.log(messageList[0])
+        // console.log(messageList[0])
         // Filter messages based on the storeId of the seller
         const filteredMessages = messageList.filter(
           (chat: any) => {
-            console.log(chat.buyerId == userId, chat.buyerId, userId)
-            return chat.buyerId === userId
+            // console.log(chat.storeId == userId, chat.buyerId, userId)
+            return chat.storeId === userId
           }
         ) as any;
         // console.log(filteredMessages.length)

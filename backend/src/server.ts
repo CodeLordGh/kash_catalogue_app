@@ -49,21 +49,22 @@ app.post("/chat", authenticateToken, async (req: CustomRequest, res) => {
     return res.status(401).json({ error: "Unauthorized" });
   }
   const { senderModel } = user;
-  try {
-    const { receiver, message, chatId } = req.body;
-    console.log(receiver, message, senderModel, chatId);
 
-    if (!receiver || !message || !senderModel) {
+  // console.log("I reach here")
+
+  try {
+    const { sender, message, chatId, _id, createdAt } = req.body;
+    console.log(sender, message, _id, chatId, createdAt);
+
+    if (!sender || !message || !chatId) {
       return res.status(400).json({ error: "All fields are required" });
     }
 
     const newMessage = {
-      senderModel,
-      // receiver,
+      sender: sender._id,
       message,
-      // senderModel,
-      // receiverModel,
-      timestamp: admin.database.ServerValue.TIMESTAMP,
+      _id,
+      timestamp: createdAt,
     };
 
     const ref = admin.database().ref(`chats/${chatId}/messages`);

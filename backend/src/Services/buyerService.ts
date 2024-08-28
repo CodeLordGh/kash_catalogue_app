@@ -28,7 +28,7 @@ export const registerBuyer = async (
   }
 
   const buyerId = generateUniqueId().toString();
-  console.log(buyerId);
+  // console.log(buyerId);
   const buyer = new Buyer({ buyerId, associatedStores: [seller._id] });
 
   // Create a chat in Firebase
@@ -41,6 +41,7 @@ export const registerBuyer = async (
         sender: seller.storeId, // Using storeId as sender
         message: `Welcome to ${seller.businessName}!`,
         timestamp: admin.database.ServerValue.TIMESTAMP,
+        _id: "imone"
       },
     ],
   };
@@ -97,7 +98,7 @@ interface ISeller {
 
 
 export const loginBuyer = async (input: string) => {
-  console.log("frontend data input is ",input)
+  // console.log("frontend data input is ",input)
   const user = await Buyer.findOne({ buyerId: input }).populate({
     path: 'cart.product',
     select: '-__v'
@@ -120,7 +121,7 @@ export const loginBuyer = async (input: string) => {
   // Assuming associatedStores is an array of ObjectId, we need to access the first one
   const associatedStore = user.associatedStores[0] as unknown as ISeller; // Type assertion
   
-  const seller = await Seller.findById(associatedStore).select('-password -email -chatId -_id -phoneNumber -tokenBlacklist -fullName -customers -createdAt -updatedAt -__v');
+  const seller = await Seller.findById(associatedStore).select('-password -email -chatId -_id -phoneNumber -refreshToken -tokenBlacklist -fullName -customers -createdAt -updatedAt -__v');
   
   const catalog = await Catalog.findById(seller?.catalog).select('-_id -createdAt -updatedAt -__v -seller').populate({
     path: 'products',

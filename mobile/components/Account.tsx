@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, Image, TextInput, Animated } from 'react-native
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useSelector, useDispatch } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons'; // Make sure to install expo vector icons
+import { logoutUser } from '@/app/screens/userSlice';
+import { useNavigation } from '@react-navigation/native';
 
 const Account = () => {
   const dispatch = useDispatch();
@@ -10,6 +12,8 @@ const Account = () => {
   const [profileImage, setProfileImage] = useState('https://via.placeholder.com/150');
   const [editMode, setEditMode] = useState(false);
   const [editedInfo, setEditedInfo] = useState({ ...userInfo });
+  const navigation = useNavigation();
+
 
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
@@ -30,6 +34,12 @@ const Account = () => {
     // dispatch(updateUserInfo(editedInfo));
     setEditMode(false);
   };
+
+  const handleLogout = () => {
+    // Dispatch action to log out user
+    dispatch(logoutUser());
+    navigation.navigate("Login")
+  }
 
   return (
     <View style={styles.container}>
@@ -83,6 +93,9 @@ const Account = () => {
           <Text style={styles.editButtonText}>
             {editMode ? 'Save' : 'Edit'}
           </Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPressIn={() => handleLogout()} style={{backgroundColor: "red", marginTop: 20, borderRadius: 3, paddingHorizontal: 10, paddingVertical: 5}} >
+          <Text style={{color: "#fff"}} >Logout</Text>
         </TouchableOpacity>
       </Animated.View>
     </View>

@@ -1,9 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState, useEffect } from "react";
+import React, {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+} from "react";
 import { StyleSheet, View, TouchableOpacity } from "react-native";
-import { GiftedChat } from 'react-native-gifted-chat';
+import { GiftedChat } from "react-native-gifted-chat";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ref, onChildAdded } from 'firebase/database';
+import { ref, onChildAdded } from "firebase/database";
 import { database } from "./firebase"; // Adjust the import based on your structure
 import { IMessage as GiftedChatIMessage } from "react-native-gifted-chat";
 import { retrieveToken } from "./token";
@@ -16,76 +21,85 @@ interface IMessage extends GiftedChatIMessage {}
 
 const Chat: React.FC = () => {
   const [messages, setMessages] = useState<IMessage[]>([]);
-  const [auth, setAuth] = useState("");
-  const navigation = useNavigation()
+  const auth = useSelector((state: any) => state.user.userInfo.userAuth);
+  const navigation = useNavigation();
+
+  // console.log(auth)
 
   // Access currentUser from Redux store
-  const currentUser = useSelector((state: any) => state.user.userInfo.userId); // Adjust the state path based on your store structure
-  console.log(currentUser)
-  const _auth = async () => await retrieveToken();
-  _auth().then((auth: any) => {
-    setAuth(auth);
-  });
+  const chatId = useSelector((state: any) => state.user.chatId) as string;
+  const currentUser = useSelector((state: any) => state.user.userInfo);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!currentUser) return; // Ensure currentUser is available
-    const chatId = currentUser.id;
     const chatRef = ref(database, `chats/${chatId}/messages`);
 
     const unsubscribe = onChildAdded(chatRef, (snapshot) => {
       const message = snapshot.val();
-      console.log(message.message);
-
+      // console.log(Array.from(message));
+      // message.forEach((msg: any) => {
+      //   console.log(msg.message);
+      // });
       if (message) {
-        setMessages((previousMessages) =>
-          GiftedChat.append(previousMessages, [{
-            _id: snapshot.key || Date.now().toString(),
-            text: message.message,
-            createdAt: new Date(message.timestamp),
-            user: {
-              _id: 'buyer',
-              name: message.senderModel,
+        // message.forEach((msg: any) => {
+          setMessages((previuosMsg: any) => [
+            {
+              _id: message._id,
+              text: message.message,
+              createdAt: message.timestamp,
+              user: { _id: message.sender },
             },
-          }])
-        );
+            ...previuosMsg,
+          ]);
+        // });
       }
     });
-
     // Clean up the listener
     return () => unsubscribe();
-  }, [currentUser]);
+  }, [chatId]);
 
-  const handleSend = async (newMessages: IMessage[]) => {
-    const { text } = newMessages[0];
+  const handleSend = useCallback(async (messages = []) => {
+    // setMessages((prv) => GiftedChat.append(prv, messages));
+    const { _id, text, user, createdAt } = messages[0];
 
     try {
-      const response = await axios.post('https://czc9hkp8-3000.uks1.devtunnels.ms/chat', {
-        receiver: "buyer",
-        message: text,
-        chatId: currentUser.id
-      }, {
-        headers: {
-          'Authorization': `Bearer ${auth}`,
+      const response = await axios.post(
+        "https://czc9hkp8-3000.uks1.devtunnels.ms/chat",
+        {
+          sender: user,
+          message: text,
+          chatId: chatId,
+          _id,
+          createdAt,
         },
-      });
+        {
+          headers: {
+            Authorization: `Bearer ${auth}`,
+          },
+        }
+      );
       console.log(response.data);
-    } catch (error) {
-      console.error('Error sending message:', error);
+    } catch (error: any) {
+      console.log(error.response);
+      console.error("Error sending message:", error);
     }
-  };
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity onPress={() => navigation.goBack()} style={{ paddingLeft: 20 }}>
+      <TouchableOpacity
+        onPress={() => navigation.goBack()}
+        style={{ paddingLeft: 20 }}
+      >
         <Ionicons name="arrow-back" size={24} color="white" />
       </TouchableOpacity>
       <View style={styles.messageList}>
         <GiftedChat
           messages={messages}
-          onSend={handleSend}
+          onSend={(messages: any) => handleSend(messages)}
           user={{
-            _id: currentUser.id,
-            name: currentUser.model,
+            _id: currentUser.userId,
+            // name: currentUser.model,
           }}
         />
       </View>

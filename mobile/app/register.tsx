@@ -113,7 +113,7 @@ const RegisterScreen = () => {
         // Register as a seller
         setisLoading(true);
         await axios
-          .post("https://czc9hkp8-3000.uks1.devtunnels.ms/seller/register", {
+          .post("https://czc9hkp8-3000.uks1.devtunnels.ms/api/seller/register", {
             fullName: fullName,
             businessName: busynessName,
             email: email,
