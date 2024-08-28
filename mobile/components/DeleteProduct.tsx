@@ -1,3 +1,4 @@
+import { setLoading } from "@/app/screens/userSlice";
 import { retrieveToken } from "@/app/token";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -5,18 +6,20 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
+import { useDispatch, useSelector } from "react-redux";
 
 const DeleteProduct = () => {
   const navigation = useNavigation();
   const [catalogData, setCatalogData] = useState([]);
-
-  const [isLoading, setIsLoading] = useState(false);
+const token = useSelector((state:any) => state.user.userInfo.userAuth)
+  const loading = useSelector((state:any)=> state.user.loading)
+  const dispatch = useDispatch()
 
   useEffect(() => {
     const getProducts = async () => {
-      const token = await retrieveToken();
+      
       try {
-        setIsLoading(true);
+        dispatch(setLoading(true));
         await axios
           .get("https://czc9hkp8-3000.uks1.devtunnels.ms/api/products", {
             headers: {
@@ -25,11 +28,11 @@ const DeleteProduct = () => {
           })
           .then((data) => {
             setCatalogData(data.data);
-            console.log(catalogData);
-            setIsLoading(false);
+            // console.log(catalogData);
+            dispatch(setLoading(false));
           });
       } catch (error) {
-        setIsLoading(false);
+        dispatch(setLoading(false));
         Alert.alert("Error retreiving product data!");
       }
     };
@@ -38,8 +41,8 @@ const DeleteProduct = () => {
   }, []);
 
   const handleDelete = async (id:any) => {
-    const token = await retrieveToken();
     try {
+      dispatch(setLoading(true));
       await axios
         .delete(`https://czc9hkp8-3000.uks1.devtunnels.ms/api/product/${id}`, {
           headers: {
@@ -49,8 +52,10 @@ const DeleteProduct = () => {
         .then((data) => {
           console.log(data);
         });
+      dispatch(setLoading(false));
     } catch (error:any) {
       console.log(error.response);
+      dispatch(setLoading(false));
     }
   }
 
@@ -65,7 +70,7 @@ const DeleteProduct = () => {
 
         <View style={styles.productsContainer}>
           <ScrollView>
-          {isLoading ? (
+          {loading ? (
             <Text>Loading...</Text>
           ) : catalogData.length >= 1 ? (
             catalogData.map((data: any, index: any) => (
