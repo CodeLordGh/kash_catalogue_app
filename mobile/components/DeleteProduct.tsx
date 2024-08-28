@@ -23,7 +23,7 @@ const token = useSelector((state:any) => state.user.userInfo.userAuth)
       try {
         dispatch(setLoading(true));
         await axios
-          .get(`https://czc9hkp8-3000.uks1.devtunnels.ms/api/products`, {
+          .get(`${baseUrl}/api/products`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },

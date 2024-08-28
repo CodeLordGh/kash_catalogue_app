@@ -5,7 +5,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons'; // Make sure to install expo vector icons
 import { logoutUser, setLoading } from '@/app/screens/userSlice';
 import { useNavigation } from '@react-navigation/native';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
+import { baseUrl } from '@/baseUrl';
+
 
 const Account = () => {
   const dispatch = useDispatch();
@@ -14,10 +16,12 @@ const Account = () => {
   const [editMode, setEditMode] = useState(false);
   const [editedInfo, setEditedInfo] = useState({ ...userInfo });
   const navigation = useNavigation();
-  const baseUrl = useSelector((state:any) => state.user.baseUrl)
+  const storeId = useSelector((state:any) => state.user.shop.storeId  )
 
+  // console.log(userInfo.userAuth   )
+  // console.log(`${baseUrl}/api/seller/logout`) 
 
-
+// console.log(userInfo)
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
@@ -41,13 +45,21 @@ const Account = () => {
   const handleLogout = async () => {
     // Dispatch action to log out user
     dispatch(setLoading(false))
-    dispatch(logoutUser());
+    
+    // console.log(`${baseUrl}/api/seller/logout`) 
     // if(userInfo.User == "Seller") {
-      await axios.post (`${baseUrl}/api/seller/logout`, {
-        headers : {
-          Authorization : `Bearer ${userInfo.userAuth}`
-        }
-      }).then(()=>  navigation.navigate("Login"))
+      try {
+        const response = await axios.post(`${baseUrl}/api/seller/logout`, null, {
+          headers: {
+            Authorization: `Bearer ${userInfo.userAuth}`,
+          },
+        });
+      
+        dispatch(logoutUser());
+        navigation.navigate("Login");
+      } catch (error:any) {
+        console.log(error.response);
+      }
     // }
    
   }
@@ -89,12 +101,20 @@ const Account = () => {
             editMode={editMode}
             onChangeText={(text:string) => setEditedInfo({ ...editedInfo, phoneNumber: text })}
           />
-          <InfoItem
-            label="User ID"
-            value={editedInfo.userId}
-            editable={false}
-            editMode={editMode}
-          />
+          {editedInfo.User === "Seller"
+          ? <InfoItem
+          label="Store ID"
+          value={editedInfo.userId}
+          editable={false}
+          editMode={editMode}
+        />
+      : <InfoItem
+      label="User ID"
+      value={editedInfo.userId}
+      editable={false}
+      editMode={editMode}
+    />}
+          
         </View>
 
         <TouchableOpacity

@@ -15,6 +15,7 @@ import { retrieveToken } from "./token";
 import axios from "axios";
 import { useSelector } from "react-redux"; // Import useSelector
 import { useNavigation } from "@react-navigation/native";
+import { baseUrl } from "@/baseUrl";
 
 // Define the IMessage interface
 interface IMessage extends GiftedChatIMessage {}
@@ -23,7 +24,6 @@ const Chat: React.FC = () => {
   const [messages, setMessages] = useState<IMessage[]>([]);
   const auth = useSelector((state: any) => state.user.userInfo.userAuth);
   const navigation = useNavigation();
-  const baseUrl = useSelector((state:any) => state.user.baseUrl)
 
   // console.log(auth)
 
@@ -68,7 +68,7 @@ const Chat: React.FC = () => {
       console.log("starting")
       await axios
         .post(
-          `https://czc9hkp8-3000.uks1.devtunnels.ms/chat`,
+          `${baseUrl}/chat`,
           {
             sender: user,
             message: text,

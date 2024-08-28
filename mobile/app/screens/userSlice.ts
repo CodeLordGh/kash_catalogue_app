@@ -29,7 +29,6 @@ interface UserState {
   };
   loading: boolean;
   products: Product[],
-  baseUrl: string
 }
 
 const initialState: UserState = {
@@ -47,7 +46,6 @@ const initialState: UserState = {
   },
   loading: false,
   products: [],
-  baseUrl: 'https://czc9hkp8-3000.uks1.devtunnels.ms'
 };
 
 const userSlice = createSlice({
@@ -90,9 +88,6 @@ const userSlice = createSlice({
           };
           state.loading = false;
           state.products = [];
-    },
-    setBaseUrl: (state) => {
-      state.baseUrl = 'https://czc9hkp8-3000.uks1.devtunnels.ms'
     }
   },
 });

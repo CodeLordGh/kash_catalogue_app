@@ -13,6 +13,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { setCartProducts, setCatalogProducts, setChatId, setLoading, setProducts, setShop, setUserInfo } from "./screens/userSlice";
+import { baseUrl } from "@/baseUrl";
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -23,7 +24,6 @@ const LoginScreen = () => {
   const [option, setOption] = useState("buyer");
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const dispatch = useDispatch();
-  const baseUrl = useSelector((state:any) => state.user.baseUrl)
 
 
   // const cartProducts = useSelector((state:any) => state.user.cartProducts)
@@ -35,7 +35,7 @@ const LoginScreen = () => {
       try {
         dispatch(setLoading(true));
         await axios
-          .post(`https://czc9hkp8-3000.uks1.devtunnels.ms/api/seller/login`, {
+          .post(`${baseUrl}/api/seller/login`, {
             email,
             password,
           })
@@ -50,6 +50,10 @@ const LoginScreen = () => {
             }))
             dispatch(setChatId(res.data.user.chatId))
             dispatch(setProducts(res.data.products))
+            dispatch(setShop({
+              businessName: res.data.user.businessName,
+              storeId: res.data.user.storeId,
+            }))
             dispatch(setLoading(false));
             return navigation.replace("SellerMainScreen");
           });
@@ -60,7 +64,7 @@ const LoginScreen = () => {
     } else if (option === "buyer") {
       try {
         dispatch(setLoading(true));
-        const response = await axios.post(`https://czc9hkp8-3000.uks1.devtunnels.ms/api/login`, { input: login });
+        const response = await axios.post(`${baseUrl}/api/login`, { input: login });
         const data = response.data;
   
         // Dispatch actions to update the Redux store
