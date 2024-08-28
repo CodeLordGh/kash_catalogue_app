@@ -23,6 +23,7 @@ const Chat: React.FC = () => {
   const [messages, setMessages] = useState<IMessage[]>([]);
   const auth = useSelector((state: any) => state.user.userInfo.userAuth);
   const navigation = useNavigation();
+  const baseUrl = useSelector((state:any) => state.user.baseUrl)
 
   // console.log(auth)
 
@@ -42,15 +43,15 @@ const Chat: React.FC = () => {
       // });
       if (message) {
         // message.forEach((msg: any) => {
-          setMessages((previuosMsg: any) => [
-            {
-              _id: message._id,
-              text: message.message,
-              createdAt: message.timestamp,
-              user: { _id: message.sender },
-            },
-            ...previuosMsg,
-          ]);
+        setMessages((previuosMsg: any) => [
+          {
+            _id: message._id,
+            text: message.message,
+            createdAt: message.timestamp,
+            user: { _id: message.sender },
+          },
+          ...previuosMsg,
+        ]);
         // });
       }
     });
@@ -63,22 +64,33 @@ const Chat: React.FC = () => {
     const { _id, text, user, createdAt } = messages[0];
 
     try {
-      const response = await axios.post(
-        "https://czc9hkp8-3000.uks1.devtunnels.ms/chat",
-        {
-          sender: user,
-          message: text,
-          chatId: chatId,
-          _id,
-          createdAt,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${auth}`,
+      const startTime = Date.now();
+      console.log("starting")
+      await axios
+        .post(
+          `https://czc9hkp8-3000.uks1.devtunnels.ms/chat`,
+          {
+            sender: user,
+            message: text,
+            chatId: chatId,
+            _id,
+            createdAt,
           },
-        }
-      );
-      console.log(response.data);
+          {
+            headers: {
+              Authorization: `Bearer ${auth}`,
+            },
+          }
+        )
+        .then((data) => {
+          const endTime = Date.now();
+          const duration = endTime - startTime; // Duration in milliseconds
+          console.log(`Request took ${duration} ms`);
+      console.log("completed")
+
+          // Handle your data here
+        })
+      // console.log(response.data);
     } catch (error: any) {
       console.log(error.response);
       console.error("Error sending message:", error);

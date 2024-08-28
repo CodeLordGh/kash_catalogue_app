@@ -28,7 +28,8 @@ interface UserState {
     storeId: string;
   };
   loading: boolean;
-  products: Product[]
+  products: Product[],
+  baseUrl: string
 }
 
 const initialState: UserState = {
@@ -36,7 +37,7 @@ const initialState: UserState = {
   cartProducts: [],
   catalogProducts: [],
   userInfo: {
-    userId: '',
+    userId: 'j',
     User: '',
     userAuth: '',
   },
@@ -45,7 +46,8 @@ const initialState: UserState = {
     storeId: '',
   },
   loading: false,
-  products: []
+  products: [],
+  baseUrl: 'https://czc9hkp8-3000.uks1.devtunnels.ms'
 };
 
 const userSlice = createSlice({
@@ -88,6 +90,9 @@ const userSlice = createSlice({
           };
           state.loading = false;
           state.products = [];
+    },
+    setBaseUrl: (state) => {
+      state.baseUrl = 'https://czc9hkp8-3000.uks1.devtunnels.ms'
     }
   },
 });

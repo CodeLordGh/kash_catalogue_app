@@ -11,6 +11,7 @@ import axios from "axios";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "./types";
 import { useNavigation } from "@react-navigation/native";
+import { useSelector } from "react-redux";
 
 type RegisterScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -92,16 +93,20 @@ const RegisterScreen = () => {
   const [option, setActiveOption] = useState("storeId");
   const [isLoading, setisLoading] = useState(false);
   const navigation = useNavigation<RegisterScreenNavigationProp>();
+  const baseUrl = useSelector((state: any) => state.user.baseUrl);
 
   // RegisterScreen component
   const handleRegister = async () => {
-    console.log(storeId)
-    try {
+    // console.log(storeId);
+    console.log("run step 1");
+
       if (option === "storeId") {
-        // Register with storeId
+        console.log("run step 2");
+        try {
+          // Register with storeId
         setisLoading(true);
         await axios
-          .post("https://czc9hkp8-3000.uks1.devtunnels.ms/api/register", {
+          .post(`https://czc9hkp8-3000.uks1.devtunnels.ms/api/register`, {
             storeId: storeId,
           })
           .then((response) => {
@@ -109,11 +114,21 @@ const RegisterScreen = () => {
             setisLoading(false);
             return navigation.navigate("BuyerMainScreen");
           });
+        } catch (error: any) {
+          console.error(error);
+          setisLoading(false);
+          Alert.alert("Error", "Store not found!");
+        }
+        
       } else if (option === "seller") {
         // Register as a seller
-        setisLoading(true);
+        console.log("run step 3");
+        console.log(baseUrl);
+
+        try {
+          setisLoading(true);
         await axios
-          .post("https://czc9hkp8-3000.uks1.devtunnels.ms/api/seller/register", {
+          .post(`https://czc9hkp8-3000.uks1.devtunnels.ms/api/seller/register`, {
             fullName: fullName,
             businessName: busynessName,
             email: email,
@@ -121,18 +136,18 @@ const RegisterScreen = () => {
           })
           .then(() => {
             setisLoading(false);
-            return navigation.navigate("SellerMainScreen");
+            return navigation.navigate("Login");
           });
+        } catch (error:any) {
+          console.error(error.response);
+          setisLoading(false);
+          Alert.alert("Error", "Try again!");
+        }
+        
       }
-    } catch (error: any) {
-      console.error("Registration failed:", error.response);
-      setisLoading(false);
-      Alert.alert("Error", "Store not found!");
-    }
   };
 
   const componentRender = () => {
-    const navigation = useNavigation()
     switch (option) {
       case "storeId":
         return <StoreIdRegis storeId={storeId} setStoreId={setStoreId} />;
@@ -157,18 +172,22 @@ const RegisterScreen = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.logo}>EZURU</Text>
-      <View  style={{
+      <View
+        style={{
           backgroundColor: "#fff",
           borderRadius: 15,
           paddingHorizontal: 20,
-          paddingBottom: 40
+          paddingBottom: 40,
         }}
-        >
+      >
         <Text style={styles.title}>Sign Up</Text>
 
         {componentRender()}
 
-        <TouchableOpacity style={styles.button} onPress={() =>handleRegister()}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => handleRegister()}
+        >
           <Text style={styles.buttonText}>
             {isLoading ? "Loading..." : "Register"}
           </Text>
@@ -186,7 +205,7 @@ const RegisterScreen = () => {
 
         <View style={styles.signInContainer}>
           <Text>Already have an account? </Text>
-          <TouchableOpacity onPressIn={()=> navigation.navigate("Login")}>
+          <TouchableOpacity onPressIn={() => navigation.navigate("Login")}>
             <Text style={styles.signInText}>Sign In</Text>
           </TouchableOpacity>
         </View>
@@ -216,7 +235,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 20,
     color: "#f5f5f5",
-    marginTop:60
+    marginTop: 60,
   },
   title: {
     fontSize: 20,
@@ -255,7 +274,7 @@ const styles = StyleSheet.create({
   },
   footerText: {
     color: "#fff",
-    fontSize: 15
+    fontSize: 15,
   },
 });
 

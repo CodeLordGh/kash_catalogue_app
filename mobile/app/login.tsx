@@ -11,7 +11,6 @@ import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "./types";
 import { StackNavigationProp } from "@react-navigation/stack";
 import axios from "axios";
-import { storeToken } from "./token";
 import { useDispatch, useSelector } from "react-redux";
 import { setCartProducts, setCatalogProducts, setChatId, setLoading, setProducts, setShop, setUserInfo } from "./screens/userSlice";
 
@@ -24,6 +23,8 @@ const LoginScreen = () => {
   const [option, setOption] = useState("buyer");
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const dispatch = useDispatch();
+  const baseUrl = useSelector((state:any) => state.user.baseUrl)
+
 
   // const cartProducts = useSelector((state:any) => state.user.cartProducts)
   const loading = useSelector((state:any) => state.user.loading)
@@ -34,7 +35,7 @@ const LoginScreen = () => {
       try {
         dispatch(setLoading(true));
         await axios
-          .post("https://czc9hkp8-3000.uks1.devtunnels.ms/api/seller/login", {
+          .post(`https://czc9hkp8-3000.uks1.devtunnels.ms/api/seller/login`, {
             email,
             password,
           })
@@ -59,7 +60,7 @@ const LoginScreen = () => {
     } else if (option === "buyer") {
       try {
         dispatch(setLoading(true));
-        const response = await axios.post('https://czc9hkp8-3000.uks1.devtunnels.ms/api/login', { input: login });
+        const response = await axios.post(`https://czc9hkp8-3000.uks1.devtunnels.ms/api/login`, { input: login });
         const data = response.data;
   
         // Dispatch actions to update the Redux store

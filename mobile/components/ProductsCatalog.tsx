@@ -1,9 +1,8 @@
 import { setLoading, setProducts } from "@/app/screens/userSlice";
-import { retrieveToken } from "@/app/token";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { useDispatch, useSelector } from "react-redux";
@@ -14,6 +13,8 @@ const ProductsCatalog = () => {
   const dispatch = useDispatch()
   const loading = useSelector((state:any) => state.user.loading)
 const token = useSelector((state:any) => state.user.userInfo.userAuth)
+const baseUrl = useSelector((state:any) => state.user.baseUrl)
+
 
   useEffect(() => {
     const getProducts = async () => {
@@ -21,7 +22,7 @@ const token = useSelector((state:any) => state.user.userInfo.userAuth)
       try {
         dispatch(setLoading(true));
         await axios
-          .get("https://czc9hkp8-3000.uks1.devtunnels.ms/api/products", {
+          .get(`${baseUrl}/api/products`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },

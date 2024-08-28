@@ -3,8 +3,9 @@ import { View, Text, StyleSheet, Image, TextInput, Animated } from 'react-native
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useSelector, useDispatch } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons'; // Make sure to install expo vector icons
-import { logoutUser } from '@/app/screens/userSlice';
+import { logoutUser, setLoading } from '@/app/screens/userSlice';
 import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
 
 const Account = () => {
   const dispatch = useDispatch();
@@ -13,6 +14,8 @@ const Account = () => {
   const [editMode, setEditMode] = useState(false);
   const [editedInfo, setEditedInfo] = useState({ ...userInfo });
   const navigation = useNavigation();
+  const baseUrl = useSelector((state:any) => state.user.baseUrl)
+
 
 
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
@@ -35,10 +38,18 @@ const Account = () => {
     setEditMode(false);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     // Dispatch action to log out user
+    dispatch(setLoading(false))
     dispatch(logoutUser());
-    navigation.navigate("Login")
+    // if(userInfo.User == "Seller") {
+      await axios.post (`${baseUrl}/api/seller/logout`, {
+        headers : {
+          Authorization : `Bearer ${userInfo.userAuth}`
+        }
+      }).then(()=>  navigation.navigate("Login"))
+    // }
+   
   }
 
   return (

@@ -1,5 +1,4 @@
 import { setLoading } from "@/app/screens/userSlice";
-import { retrieveToken } from "@/app/token";
 import axios from "axios";
 import React, { useState } from "react";
 import {
@@ -24,6 +23,7 @@ const AddProduct = () => {
   const [products, setProducts] = useState<{ color: string; qty: string }[]>(
     []
   );
+  const baseUrl = useSelector((state:any) => state.user.baseUrl)
   const loading = useSelector((state:any) => state.user.loading)
   const dispatch = useDispatch()
 const token = useSelector((state:any) => state.user.userInfo.userAuth)
@@ -43,7 +43,7 @@ const token = useSelector((state:any) => state.user.userInfo.userAuth)
 
       await axios
         .post(
-          "https://czc9hkp8-3000.uks1.devtunnels.ms/api/product",
+          `https://czc9hkp8-3000.uks1.devtunnels.ms/api/product`,
           {
             stock: products,
             description: description,

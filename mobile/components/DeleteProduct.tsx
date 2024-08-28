@@ -14,6 +14,8 @@ const DeleteProduct = () => {
 const token = useSelector((state:any) => state.user.userInfo.userAuth)
   const loading = useSelector((state:any)=> state.user.loading)
   const dispatch = useDispatch()
+  const baseUrl = useSelector((state:any) => state.user.baseUrl)
+
 
   useEffect(() => {
     const getProducts = async () => {
@@ -21,7 +23,7 @@ const token = useSelector((state:any) => state.user.userInfo.userAuth)
       try {
         dispatch(setLoading(true));
         await axios
-          .get("https://czc9hkp8-3000.uks1.devtunnels.ms/api/products", {
+          .get(`https://czc9hkp8-3000.uks1.devtunnels.ms/api/products`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
