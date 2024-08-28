@@ -1,5 +1,5 @@
 import { setLoading } from "@/app/screens/userSlice";
-import { retrieveToken } from "@/app/token";
+import { baseUrl } from "@/baseUrl";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
@@ -14,7 +14,6 @@ const DeleteProduct = () => {
 const token = useSelector((state:any) => state.user.userInfo.userAuth)
   const loading = useSelector((state:any)=> state.user.loading)
   const dispatch = useDispatch()
-  const baseUrl = useSelector((state:any) => state.user.baseUrl)
 
 
   useEffect(() => {
@@ -30,7 +29,6 @@ const token = useSelector((state:any) => state.user.userInfo.userAuth)
           })
           .then((data) => {
             setCatalogData(data.data);
-            // console.log(catalogData);
             dispatch(setLoading(false));
           });
       } catch (error) {
@@ -58,6 +56,7 @@ const token = useSelector((state:any) => state.user.userInfo.userAuth)
     } catch (error:any) {
       console.log(error.response);
       dispatch(setLoading(false));
+      Alert.alert("Error retreiving product data!");
     }
   }
 

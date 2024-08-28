@@ -40,7 +40,7 @@ const LoginScreen = () => {
             password,
           })
           .then((res) => {
-            console.log(res.data)
+            // console.log(res.data)
             dispatch(setUserInfo({
               userId: res.data.user.storeId,
               userAuth: res.data.accessToken,

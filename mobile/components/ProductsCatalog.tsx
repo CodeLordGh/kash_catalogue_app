@@ -1,4 +1,5 @@
 import { setLoading, setProducts } from "@/app/screens/userSlice";
+import { baseUrl } from "@/baseUrl";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
@@ -13,7 +14,6 @@ const ProductsCatalog = () => {
   const dispatch = useDispatch()
   const loading = useSelector((state:any) => state.user.loading)
 const token = useSelector((state:any) => state.user.userInfo.userAuth)
-const baseUrl = useSelector((state:any) => state.user.baseUrl)
 
 
   useEffect(() => {
@@ -21,18 +21,17 @@ const baseUrl = useSelector((state:any) => state.user.baseUrl)
       
       try {
         dispatch(setLoading(true));
-        await axios
+        const res = await axios
           .get(`${baseUrl}/api/products`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           })
-          .then((data) => {
-            dispatch(setProducts(data.data));
-            console.log(catalog);
+            dispatch(setProducts(res.data));
+            console.log("line 32 ",catalog);
             dispatch(setLoading(false));
-          });
-      } catch (error) {
+
+      } catch (error:any) {
         dispatch(setLoading(false))
         Alert.alert("Error retreiving product data!");
       }

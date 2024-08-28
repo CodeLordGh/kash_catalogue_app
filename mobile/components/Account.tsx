@@ -49,7 +49,7 @@ const Account = () => {
     // console.log(`${baseUrl}/api/seller/logout`) 
     // if(userInfo.User == "Seller") {
       try {
-        const response = await axios.post(`${baseUrl}/api/seller/logout`, null, {
+        axios.post(`${baseUrl}/api/seller/logout`, null, {
           headers: {
             Authorization: `Bearer ${userInfo.userAuth}`,
           },
