@@ -100,6 +100,9 @@ app.post("/chat", auth_1.authenticateToken, (req, res) => __awaiter(void 0, void
         res.status(500).json({ error: "Error saving message" });
     }
 }));
+app.get("/", (req, res) => {
+    res.status(200).send("Render is working!");
+});
 app.get("/chat/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const user = req.user;
     if (!user) {

@@ -75,6 +75,9 @@ app.post("/chat", authenticateToken, async (req: CustomRequest, res) => {
     res.status(500).json({ error: "Error saving message" });
   }
 });
+app.get("/", (req, res) => {
+  res.status(200).send("Render is working!")
+})
 
 app.get("/chat/", async (req: CustomRequest, res) => {
   const user = req.user;

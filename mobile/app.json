@@ -16,7 +16,8 @@
       "enabled": true
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "ezuru"
     },
     "android": {
       "adaptiveIcon": {
