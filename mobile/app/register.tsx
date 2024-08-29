@@ -106,7 +106,7 @@ const RegisterScreen = () => {
           // Register with storeId
         setisLoading(true);
         await axios
-          .post(`https://czc9hkp8-3000.uks1.devtunnels.ms/api/register`, {
+          .post(`${baseUrl}/api/register`, {
             storeId: storeId,
           })
           .then((response) => {
@@ -128,7 +128,7 @@ const RegisterScreen = () => {
         try {
           setisLoading(true);
         await axios
-          .post(`https://czc9hkp8-3000.uks1.devtunnels.ms/api/seller/register`, {
+          .post(`${baseUrl}/api/seller/register`, {
             fullName: fullName,
             businessName: busynessName,
             email: email,
