@@ -19,6 +19,7 @@ const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || 'access_secret';
 const authenticateToken = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
+    // console.log(token)
     if (!token)
         return res.sendStatus(401);
     try {
@@ -30,7 +31,7 @@ const authenticateToken = (req, res, next) => __awaiter(void 0, void 0, void 0, 
         if (!seller || seller.tokenBlacklist.includes(token)) {
             return res.sendStatus(403);
         }
-        req.user = { id: seller._id.toString() };
+        req.user = { id: seller._id.toString(), senderModel: "Seller", receiverModel: "Buyer" };
         req.token = token;
         next();
     }

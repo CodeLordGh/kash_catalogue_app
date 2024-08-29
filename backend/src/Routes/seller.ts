@@ -37,7 +37,7 @@ router.post('/seller/register', async (req: CustomRequest, res: Response) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // generate a storeId
-    const storeId = businessName + "-" + generateStoreId (businessName) 
+    const storeId = businessName + "-" + generateStoreId () 
 
     // Create new seller
     const newSeller = new Seller({
@@ -66,9 +66,12 @@ const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || 'refresh_secret
 
 // Login route
 router.post('/seller/login', async (req: CustomRequest, res) => {
+
+  let products
   try {
     const { email, password } = req.body;
-    const seller = await Seller.findOne({ email });
+    const seller = await Seller.findOne({ email }).select('-refreshToken -createdAt -__v');
+    if (seller) products = await Catalog.find({catalog: seller.catalog})
 
     if (!seller || !await bcrypt.compare(password, seller.password)) {
       return res.status(400).json({ message: 'Invalid credentials' });
@@ -80,7 +83,9 @@ router.post('/seller/login', async (req: CustomRequest, res) => {
     seller.refreshToken = refreshToken;
     await seller.save();
 
-    res.json({ accessToken, refreshToken, storeId: seller.storeId });
+    seller.password = "" //undefined as any
+
+    res.status(200).json({ accessToken, user: seller, products });
   } catch (error) {
     res.status(500).json({ message: 'Error logging in', error });
   }
@@ -153,7 +158,7 @@ export function generateAccessToken(id: any) : string {
   return jwt.sign({ id }, ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
 }
 
-function generateStoreId(name:string) {
+function generateStoreId() {
   return  Math.floor(100000 + Math.random() * 900000);
 
 }

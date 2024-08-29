@@ -1,4 +1,5 @@
-import { retrieveToken } from "@/app/token";
+import { setLoading } from "@/app/screens/userSlice";
+import { baseUrl } from "@/baseUrl";
 import axios from "axios";
 import React, { useState } from "react";
 import {
@@ -12,6 +13,7 @@ import {
   Button,
   Alert,
 } from "react-native";
+import { useDispatch, useSelector } from "react-redux";
 
 const AddProduct = () => {
   const [color, setColor] = useState("");
@@ -22,7 +24,11 @@ const AddProduct = () => {
   const [products, setProducts] = useState<{ color: string; qty: string }[]>(
     []
   );
-  const [isLoading, setIsLoading] = useState(false);
+  const loading = useSelector((state:any) => state.user.loading)
+  const dispatch = useDispatch()
+const token = useSelector((state:any) => state.user.userInfo.userAuth)
+
+  // console.log(`${baseUrl}/api/product`)
 
   const handleAddProduct = () => {
     if (color || qty) {
@@ -33,14 +39,14 @@ const AddProduct = () => {
   };
 
   const handlePupblish = async () => {
-    const token = await retrieveToken();
+    
     // console.log(token)
     try {
-      setIsLoading(true);
+      dispatch(setLoading(true));
 
       await axios
         .post(
-          "https://czc9hkp8-3000.uks1.devtunnels.ms/api/product",
+          `${baseUrl}/api/product`,
           {
             stock: products,
             description: description,
@@ -58,12 +64,13 @@ const AddProduct = () => {
           setPrice("");
           setDescription("");
           setProducts([]);
-          setIsLoading(false);
+          dispatch(setLoading(false));
           // console.log(data.data);
           Alert.alert(data.data.message);
         });
     } catch (er: any) {
-      setIsLoading(false);
+      console.log(er.response);
+      dispatch(setLoading(false));
       Alert.alert("Error adding product!");
     }
   };
@@ -87,11 +94,11 @@ const AddProduct = () => {
 
           <View style={styles.imageContainer}>
           <Image
-            source={require("../assets/images/download.jpeg")}
+            source={require("../assets/images/download.png")}
             style={styles.image}
           />
           <Image
-            source={require("../assets/images/downloa.jpeg")}
+            source={require("../assets/images/downloa.png")}
             style={styles.image}
           />
         </View>
@@ -157,7 +164,7 @@ const AddProduct = () => {
           onPress={() => handlePupblish()}
         >
           <Text style={styles.publishButtonText}>
-            {isLoading ? "Publishing..." : "Publish"}
+            {loading ? "Publishing..." : "Publish"}
           </Text>
         </TouchableOpacity>
         </ScrollView>

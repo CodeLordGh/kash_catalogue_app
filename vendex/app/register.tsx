@@ -7,8 +7,12 @@ import {
   StyleSheet,
   Alert,
 } from "react-native";
-import { Link, useRouter } from "expo-router";
 import axios from "axios";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { RootStackParamList } from "./types";
+import { useNavigation } from "@react-navigation/native";
+
+type RegisterScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
 interface storeIdProps {
   storeId: string;
@@ -59,7 +63,7 @@ const SellerRegis: React.FC<sellerRegisProps> = ({
         placeholder="Busyness name"
         value={busynessName}
         onChangeText={(e) => setBusinessName(e)}
-        secureTextEntry
+        keyboardType="ascii-capable"
       />
       <TextInput
         style={styles.input}
@@ -87,49 +91,48 @@ const RegisterScreen = () => {
   const [password, setPassword] = useState("");
   const [option, setActiveOption] = useState("storeId");
   const [isLoading, setisLoading] = useState(false);
-  const router = useRouter();
+  const navigation = useNavigation<RegisterScreenNavigationProp>();
 
   // RegisterScreen component
   const handleRegister = async () => {
+    console.log(storeId)
     try {
       if (option === "storeId") {
         // Register with storeId
         setisLoading(true);
-        await axios.post(
-          "https://vendex-9taw.onrender.com/api/register",
-          {
+        await axios
+          .post("https://vendex-9taw.onrender.com/api/register", {
             storeId: storeId,
-          }
-        ).then((response)=> {
-          console.log("Registration successful:", response.data);
-        setisLoading(false);
-        return router.replace("/screens/mainScreen");
-        })
+          })
+          .then((response) => {
+            console.log("Registration successful:", response.data);
+            setisLoading(false);
+            return navigation.navigate("BuyerMainScreen");
+          });
       } else if (option === "seller") {
         // Register as a seller
         setisLoading(true);
-        await axios.post(
-          "https://vendex-9taw.onrender.com/api/seller/register",
-          {
+        await axios
+          .post("https://vendex-9taw.onrender.com/api/seller/register", {
             fullName: fullName,
             businessName: busynessName,
             email: email,
             password: password,
-          }
-        ).then(()=> {
-          
-        setisLoading(false);
-        return router.replace("/addProduct");
-        })
+          })
+          .then(() => {
+            setisLoading(false);
+            return navigation.navigate("SellerMainScreen");
+          });
       }
     } catch (error: any) {
-      console.error("Registration failed:", error.response.status);
+      console.error("Registration failed:", error.response);
       setisLoading(false);
-      Alert.alert('Error', 'Store not found!');
+      Alert.alert("Error", "Store not found!");
     }
   };
 
   const componentRender = () => {
+    const navigation = useNavigation()
     switch (option) {
       case "storeId":
         return <StoreIdRegis storeId={storeId} setStoreId={setStoreId} />;
@@ -153,34 +156,41 @@ const RegisterScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.logo}>VendEx</Text>
-      <Text style={styles.title}>Sign Up</Text>
+      <Text style={styles.logo}>EZURU</Text>
+      <View  style={{
+          backgroundColor: "#fff",
+          borderRadius: 15,
+          paddingHorizontal: 20,
+          paddingBottom: 40
+        }}
+        >
+        <Text style={styles.title}>Sign Up</Text>
 
-      {componentRender()}
+        {componentRender()}
 
-      {!isLoading ? (
-        <TouchableOpacity style={styles.button} onPress={handleRegister}>
-          <Text style={styles.buttonText}>Register</Text>
+        <TouchableOpacity style={styles.button} onPress={() =>handleRegister()}>
+          <Text style={styles.buttonText}>
+            {isLoading ? "Loading..." : "Register"}
+          </Text>
         </TouchableOpacity>
-      ) : (
-        <Text style={styles.button}>Loading...</Text>
-      )}
-      {option === "storeId" ? (
-        <Text onPress={() => setActiveOption("seller")}>
-          Register as a seller
-        </Text>
-      ) : (
-        <Text onPress={() => setActiveOption("storeId")}>
-          Register with a store
-        </Text>
-      )}
-      <View style={styles.signInContainer}>
-        <Text>Already have an account? </Text>
-        <Link href={{ pathname: "/login" }}>
-          <Text style={styles.signInText}>Sign In</Text>
-        </Link>
-      </View>
 
+        {option === "storeId" ? (
+          <Text onPress={() => setActiveOption("seller")}>
+            Register as a seller
+          </Text>
+        ) : (
+          <Text onPress={() => setActiveOption("storeId")}>
+            Register with a store
+          </Text>
+        )}
+
+        <View style={styles.signInContainer}>
+          <Text>Already have an account? </Text>
+          <TouchableOpacity onPressIn={()=> navigation.navigate("Login")}>
+            <Text style={styles.signInText}>Sign In</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
       <View style={styles.footer}>
         <TouchableOpacity>
           <Text style={styles.footerText}>Privacy Policy</Text>
@@ -196,31 +206,32 @@ const RegisterScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: "space-between",
     padding: 20,
-    backgroundColor: "white",
+    backgroundColor: "#6200EE",
   },
   logo: {
     fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
     marginBottom: 20,
+    color: "#f5f5f5",
+    marginTop:60
   },
   title: {
     fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 20,
+    marginVertical: 20,
   },
   input: {
     height: 40,
-    borderColor: "gray",
-    borderWidth: 1,
+    backgroundColor: "#f5f5f5",
     marginBottom: 10,
     paddingHorizontal: 10,
     borderRadius: 5,
   },
   button: {
-    backgroundColor: "red",
+    backgroundColor: "#6200EE",
     padding: 15,
     borderRadius: 5,
     alignItems: "center",
@@ -243,7 +254,8 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   footerText: {
-    color: "gray",
+    color: "#fff",
+    fontSize: 15
   },
 });
 

@@ -7,6 +7,7 @@ import { ScrollView } from "react-native-gesture-handler";
 import { ref, onValue } from "firebase/database";
 import { database } from "@/app/firebase";
 import { retrieveStoreId, retrieveToken } from "@/app/token";
+import { useSelector } from "react-redux";
 
 type GoToChat = StackNavigationProp<ChatParamList, "Chat">;
 
@@ -75,12 +76,9 @@ const MessageItem = ({
 
 const Messages = () => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const store = async () => await retrieveStoreId();
-  const [storeId, setStoreId] = useState("");
+  const userId = useSelector((state:any) => state.user.userInfo.userId)
+  const navigation = useNavigation()
 
-  store().then((storeId: any) => {
-    setStoreId(storeId);
-  });
   useEffect(() => {
     const chatRef = ref(database, "chats");
 
@@ -91,11 +89,15 @@ const Messages = () => {
           _id: key,
           ...data[key],
         }));
+        // console.log(messageList[0])
         // Filter messages based on the storeId of the seller
         const filteredMessages = messageList.filter(
-          (chat: any) => chat.storeId === storeId
-        );
-        // console.log(filteredMessages)
+          (chat: any) => {
+            // console.log(chat.storeId == userId, chat.buyerId, userId)
+            return chat.storeId === userId
+          }
+        ) as any;
+        // console.log(filteredMessages.length)
         setMessages(filteredMessages);
       }
     });

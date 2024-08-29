@@ -1,56 +1,83 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, SafeAreaView } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
+import { removeFromCart, updateCartItemQuantity } from './actionSlice';
+import { Ionicons } from '@expo/vector-icons';
 
 interface CartItemProps {
-  title: string;
-  price: number;
+  id: string;
+  name: string;
+  color: string;
+  size: string;
   quantity: number;
-  imageSource: any;  // Using 'any' for simplicity, but ideally use a more specific type
-  onIncrement: () => void;
-  onDecrement: () => void;
+  price: number;
+  index: number;
 }
 
-const CartItem: React.FC<CartItemProps> = ({ title, price, quantity, imageSource, onIncrement, onDecrement }) => (
-  <View style={styles.cartItem}>
-    <Image source={imageSource} style={styles.itemImage} />
-    <View style={styles.itemDetails}>
-      <Text style={styles.itemTitle}>{title}</Text>
-      <Text style={styles.itemPrice}>${price.toFixed(2)}</Text>
-      <View style={styles.quantityControl}>
-        <TouchableOpacity onPress={onDecrement} style={styles.quantityButton}>
-          <Text>-</Text>
-        </TouchableOpacity>
-        <Text style={styles.quantityText}>{quantity}</Text>
-        <TouchableOpacity onPress={onIncrement} style={styles.quantityButton}>
-          <Text>+</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  </View>
-);
+const CartItem: React.FC<CartItemProps> = ({ id, name, color, size, quantity, price }) => {
+  const dispatch = useDispatch();
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
-const CartFragment: React.FC = () => {
-  // This would typically come from a state management solution or props
-  const cartItems = [
-    { id: 1, title: "Anime Figure A", price: 29.99, quantity: 2, imageSource: require('../../assets/images/downloa.jpeg') },
-    { id: 2, title: "Anime Figure B", price: 34.99, quantity: 1, imageSource: require('../../assets/images/download.jpeg') },
-  ];
+  React.useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, []);
 
-  const totalPrice = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const handleRemove = () => {
+    dispatch(removeFromCart(`${name}-${color}-${size}`));
+  };
+  const cartItemId = `${name}-${color}-${size}`
+  const handleIncrement = () => {
+    dispatch(updateCartItemQuantity({ cartItemId, quantity: quantity + 1 }));
+  };
+
+  const handleDecrement = () => {
+    if (quantity > 1) {
+      dispatch(updateCartItemQuantity({ cartItemId, quantity: quantity - 1 }));
+    }
+  };
 
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.cartItem, { opacity: fadeAnim }]}>
+      <View style={styles.itemDetails}>
+        <Text style={styles.itemTitle}>{name}</Text>
+        <Text style={styles.itemSubtitle}>Color: {color} | Size: {size}</Text>
+        <Text style={styles.itemPrice}>${(price * quantity).toFixed(2)}</Text>
+      </View>
+      <View style={styles.quantityControl}>
+        <TouchableOpacity onPress={handleDecrement} style={styles.quantityButton}>
+          <Ionicons name="remove" size={20} color="#007AFF" />
+        </TouchableOpacity>
+        <Text style={styles.quantityText}>{quantity}</Text>
+        <TouchableOpacity onPress={handleIncrement} style={styles.quantityButton}>
+          <Ionicons name="add" size={20} color="#007AFF" />
+        </TouchableOpacity>
+      </View>
+      <TouchableOpacity onPress={handleRemove} style={styles.removeButton}>
+        <Ionicons name="trash-outline" size={24} color="#FF3B30" />
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
+const CartFragment: React.FC = () => {
+  const cartItems = useSelector((state: any) => state.action.cart);
+  const dispatch = useDispatch();
+
+  const totalPrice = cartItems.reduce((sum: number, item: CartItemProps) => sum + item.price * item.quantity, 0);
+
+  return (
+    <SafeAreaView style={styles.container}>
       <Text style={styles.header}>Shopping Cart</Text>
       <ScrollView style={styles.cartList}>
-        {cartItems.map((item) => (
+        {cartItems.map((item: CartItemProps, index: number) => (
           <CartItem
-            key={item.id}
-            title={item.title}
-            price={item.price}
-            quantity={item.quantity}
-            imageSource={item.imageSource}
-            onIncrement={() => console.log('Increment', item.id)}
-            onDecrement={() => console.log('Decrement', item.id)}
+            key={`${item.name}-${item.color}-${item.size}-${index}`}
+            {...item}
+            index={index}
           />
         ))}
       </ScrollView>
@@ -61,65 +88,78 @@ const CartFragment: React.FC = () => {
       <TouchableOpacity style={styles.checkoutButton}>
         <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
       </TouchableOpacity>
-    </View>
+      {/* <TouchableOpacity style={styles.clearCartButton} onPress={() => dispatch(clearCart())}>
+        <Text style={styles.clearCartButtonText}>Clear Cart</Text>
+      </TouchableOpacity> */}
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    padding: 15,
+    backgroundColor: '#6200EE',
   },
   header: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
+    textAlign: "center",
+    color: '#fff',
     marginBottom: 20,
   },
   cartList: {
     flex: 1,
+    backgroundColor: '#151515',
+    borderBottomLeftRadius: 30,
+    borderTopRightRadius: 30,
+    padding: 15,
+    marginHorizontal:5
   },
   cartItem: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    paddingVertical: 15,
-  },
-  itemImage: {
-    width: 80,
-    height: 80,
-    resizeMode: 'contain',
-    marginRight: 15,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#222',
+    borderRadius: 15,
+    padding: 15,
+    marginBottom: 15,
   },
   itemDetails: {
     flex: 1,
-    justifyContent: 'center',
   },
   itemTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 5,
+  },
+  itemSubtitle: {
+    fontSize: 14,
+    color: '#999',
+    marginBottom: 5,
   },
   itemPrice: {
-    fontSize: 14,
-    color: '#888',
-    marginVertical: 5,
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#007AFF',
   },
   quantityControl: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#333',
+    borderRadius: 20,
+    padding: 5,
   },
   quantityButton: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 5,
   },
   quantityText: {
-    marginHorizontal: 10,
+    color: '#fff',
     fontSize: 16,
+    marginHorizontal: 10,
+  },
+  removeButton: {
+    marginLeft: 15,
   },
   totalSection: {
     flexDirection: 'row',
@@ -128,23 +168,36 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   totalText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
+    color: '#fff',
   },
   totalPrice: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#6200ee',
+    color: '#007AFF',
   },
   checkoutButton: {
-    backgroundColor: '#6200ee',
+    backgroundColor: '#007AFF',
     paddingVertical: 15,
-    borderRadius: 5,
+    borderRadius: 10,
     alignItems: 'center',
+    marginBottom: 10,
   },
   checkoutButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  clearCartButton: {
+    backgroundColor: '#FF3B30',
+    paddingVertical: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  clearCartButtonText: {
+    color: 'white',
+    fontSize: 18,
     fontWeight: 'bold',
   },
 });

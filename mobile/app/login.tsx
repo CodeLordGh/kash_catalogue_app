@@ -11,45 +11,60 @@ import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "./types";
 import { StackNavigationProp } from "@react-navigation/stack";
 import axios from "axios";
-import { storeToken } from "./token";
-import { useDispatch } from "react-redux";
-import { setCartProducts, setCatalogProducts, setChatId, setShop, setUserInfo } from "./screens/userSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { setCartProducts, setCatalogProducts, setChatId, setLoading, setProducts, setShop, setUserInfo } from "./screens/userSlice";
+import { baseUrl } from "@/baseUrl";
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  let result = {} as any;
   const [login, setLogin] = useState("")
-  const [loading, setLoading] = useState(false);
   const [option, setOption] = useState("buyer");
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const dispatch = useDispatch();
 
 
+  // const cartProducts = useSelector((state:any) => state.user.cartProducts)
+  const loading = useSelector((state:any) => state.user.loading)
+
+
   const handleSignIn = async () => {
     if (option === "seller") {
       try {
-        setLoading(true);
+        dispatch(setLoading(true));
         await axios
-          .post("https://czc9hkp8-3000.uks1.devtunnels.ms/api/seller/login", {
+          .post(`${baseUrl}/api/seller/login`, {
             email,
             password,
           })
-          .then((data) => {
-            console.log(data.data)
-            storeToken(data.data.accessToken/**, data.data.refreshToken, data.data.storeId */);
-            setLoading(false);
+          .then((res) => {
+            // console.log(res.data)
+            dispatch(setUserInfo({
+              userId: res.data.user.storeId,
+              userAuth: res.data.accessToken,
+              User: 'Seller',
+              email: res.data.user.email,
+              fullName: res.data.user.fullName
+            }))
+            dispatch(setChatId(res.data.user.chatId))
+            dispatch(setProducts(res.data.products))
+            dispatch(setShop({
+              businessName: res.data.user.businessName,
+              storeId: res.data.user.storeId,
+            }))
+            dispatch(setLoading(false));
             return navigation.replace("SellerMainScreen");
           });
       } catch (error) {
-        setLoading(false);
+        dispatch(setLoading(false));
         throw error;
       }
     } else if (option === "buyer") {
       try {
-        const response = await axios.post('https://czc9hkp8-3000.uks1.devtunnels.ms/api/login', { input: login });
+        dispatch(setLoading(true));
+        const response = await axios.post(`${baseUrl}/api/login`, { input: login });
         const data = response.data;
   
         // Dispatch actions to update the Redux store
@@ -57,25 +72,29 @@ const LoginScreen = () => {
         dispatch(setCartProducts(data.user.cart));
         dispatch(setCatalogProducts(data.user.catalog.products));
         dispatch(setUserInfo({
-          buyerId: data.user.buyerId,
+          User: data.user.type,
+          userId: data.user.buyerId,
           fullName: data.user.fullName,
           email: data.user.email,
           phoneNumber: data.user.phoneNumber,
+          userAuth: data.accessToken
         }));
         dispatch(setShop({
           businessName: data.user.seller.businessName,
           storeId: data.user.seller.storeId,
         }));
-        console.log(data.user.catalog.products)
+        dispatch(setLoading(false));
+        // console.log(data.accessToken)
         return navigation.navigate("BuyerMainScreen");
-      } catch (error) {
-        setLoading(false);
+      } catch (error:any) {
+        console.log(error);
+        dispatch(setLoading(false));
         Alert.alert("Error logging in", "Please check your credentials and try again.");
       }
     }
   };
 
-
+  // console.log(useSelector((state:any) => state.user.userInfo.userAuth))
 
   const formDisplay = () => {
     if (option === "seller") {
@@ -169,7 +188,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#6200EE",
   },
   logo: {
-    
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 0,
+    color: "#f5f5f5",
+    marginTop:60
   },
   title: {
     fontSize: 20,

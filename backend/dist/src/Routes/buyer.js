@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const buyerService_1 = require("../Services/buyerService");
+const seller_1 = require("./seller");
 const router = express_1.default.Router();
 // Middleware to extract buyerId from headers or query params
 const extractBuyerId = (req, res, next) => {
@@ -28,12 +29,14 @@ const extractBuyerId = (req, res, next) => {
 router.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { input } = req.body;
     const user = yield (0, buyerService_1.loginBuyer)(input);
-    res.status(200).json(user.buyerId);
+    const accessToken = (0, seller_1.generateAccessToken)(user.buyerId);
+    res.status(200).json({ user, accessToken });
 }));
 // Register a new buyer
 router.post('/register', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { storeId } = req.body;
+        console.log(storeId);
         const result = yield (0, buyerService_1.registerBuyer)(storeId);
         res.status(201).json(result);
     }

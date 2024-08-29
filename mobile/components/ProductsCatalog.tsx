@@ -1,35 +1,38 @@
-import { retrieveToken } from "@/app/token";
+import { setLoading, setProducts } from "@/app/screens/userSlice";
+import { baseUrl } from "@/baseUrl";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
+import { useDispatch, useSelector } from "react-redux";
 
 const ProductsCatalog = () => {
   const navigation = useNavigation();
-  const [catalogData, setCatalogData] = useState([]);
+  const catalog = useSelector((state:any) => state.user.products);
+  const dispatch = useDispatch()
+  const loading = useSelector((state:any) => state.user.loading)
+const token = useSelector((state:any) => state.user.userInfo.userAuth)
 
-  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const getProducts = async () => {
-      const token = await retrieveToken();
+      
       try {
-        setIsLoading(true);
-        await axios
-          .get("https://czc9hkp8-3000.uks1.devtunnels.ms/api/products", {
+        dispatch(setLoading(true));
+        const res = await axios
+          .get(`${baseUrl}/api/products`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           })
-          .then((data) => {
-            setCatalogData(data.data);
-            console.log(catalogData);
-            setIsLoading(false);
-          });
-      } catch (error) {
-        setIsLoading(false);
+            dispatch(setProducts(res.data));
+            console.log("line 32 ",catalog);
+            dispatch(setLoading(false));
+
+      } catch (error:any) {
+        dispatch(setLoading(false))
         Alert.alert("Error retreiving product data!");
       }
     };
@@ -48,10 +51,10 @@ const ProductsCatalog = () => {
 
         <View style={styles.productsContainer}>
           <ScrollView>
-          {isLoading ? (
-            <Text>Loading...</Text>
-          ) : catalogData.length >= 1 ? (
-            catalogData.map((data: any, index: any) => (
+          {loading ? (
+            <Text style={{color: "#fff", fontWeight: "bold"}}>Loading...</Text>
+          ) : catalog.length >= 1 ? (
+            catalog.map((data: any, index: any) => (
               <View key={data._id} style={styles.productItem} >
                 <Text style={{color: "#fff"}} >
                   Product {index + 1}: {data.name} - ${data.price}
@@ -60,7 +63,7 @@ const ProductsCatalog = () => {
               </View>
             ))
           ) : (
-            <Text>No product found!</Text>
+            <Text style={{color: "#fff", fontWeight: "bold"}} >No product found!</Text>
           )}
           </ScrollView>
         </View>

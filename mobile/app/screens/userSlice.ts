@@ -2,14 +2,24 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface UserInfo {
-  buyerId: string;
+  User: string;
+  userId: string;
   fullName?: string;
   email?: string;
   phoneNumber?: string;
+  userAuth: string
+}
+
+interface Product {
+  name: string;
+  description: string;
+  price: number,
+  _id: string;
+  stock: Array<{color: string; qty: number}>
 }
 
 interface UserState {
-  chatId: string;
+  chatId: string | Array<string>;
   cartProducts: Array<{ productId: string; quantity: number; color?: string }>;
   catalogProducts: Array<{ _id: string; name: string; price: number }>;
   userInfo: UserInfo;
@@ -17,19 +27,25 @@ interface UserState {
     businessName: string;
     storeId: string;
   };
+  loading: boolean;
+  products: Product[],
 }
 
 const initialState: UserState = {
-  chatId: '',
+  chatId: [],
   cartProducts: [],
   catalogProducts: [],
   userInfo: {
-    buyerId: '',
+    userId: 'j',
+    User: '',
+    userAuth: '',
   },
   shop: {
     businessName: '',
     storeId: '',
   },
+  loading: false,
+  products: [],
 };
 
 const userSlice = createSlice({
@@ -51,8 +67,30 @@ const userSlice = createSlice({
     setShop: (state, action: PayloadAction<{ businessName: string; storeId: string }>) => {
       state.shop = action.payload;
     },
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.loading = action.payload
+    },
+    setProducts: (state, action:PayloadAction<Product[]>) =>{
+      state.products = action.payload
+    },
+    logoutUser: (state) => {
+      state.chatId = [];
+      state.cartProducts = [];
+      state.catalogProducts = [];
+      state.userInfo = {
+        userId: '',
+        User: '',
+        userAuth: '',
+        };
+        state.shop = {
+          businessName: '',
+          storeId: '',
+          };
+          state.loading = false;
+          state.products = [];
+    }
   },
 });
 
-export const { setChatId, setCartProducts, setCatalogProducts, setUserInfo, setShop } = userSlice.actions;
+export const { setChatId, setCartProducts, setCatalogProducts, setUserInfo, setShop, setLoading, setProducts, logoutUser } = userSlice.actions;
 export default userSlice.reducer;

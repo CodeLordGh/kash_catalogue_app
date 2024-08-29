@@ -1,4 +1,3 @@
-import { MessageList } from "@/components/Messages";
 
 export type RootStackParamList = {
     RegisterScreen: undefined; // or specify params if needed
@@ -6,6 +5,7 @@ export type RootStackParamList = {
     BuyerMainScreen: undefined;
     SellerMainScreen: undefined;
     Chat: undefined;
+    ProductPage: undefined,
   };
 
   export type ChatParamList = {
