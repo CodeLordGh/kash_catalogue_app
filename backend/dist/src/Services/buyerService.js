@@ -51,7 +51,7 @@ const registerBuyer = (storeId) => __awaiter(void 0, void 0, void 0, function* (
         throw err;
     }
     const buyerId = (0, buyerId_1.generateUniqueId)().toString();
-    console.log(buyerId);
+    // console.log(buyerId);
     const buyer = new models_1.Buyer({ buyerId, associatedStores: [seller._id] });
     // Create a chat in Firebase
     const chatId = (0, buyerId_1.generateUniqueId)().toString(); // Generate a unique chat ID
@@ -63,6 +63,7 @@ const registerBuyer = (storeId) => __awaiter(void 0, void 0, void 0, function* (
                 sender: seller.storeId, // Using storeId as sender
                 message: `Welcome to ${seller.businessName}!`,
                 timestamp: admin.database.ServerValue.TIMESTAMP,
+                _id: "imone"
             },
         ],
     };
@@ -83,6 +84,7 @@ const registerBuyer = (storeId) => __awaiter(void 0, void 0, void 0, function* (
 });
 exports.registerBuyer = registerBuyer;
 const loginBuyer = (input) => __awaiter(void 0, void 0, void 0, function* () {
+    // console.log("frontend data input is ",input)
     const user = yield models_1.Buyer.findOne({ buyerId: input }).populate({
         path: 'cart.product',
         select: '-__v'
@@ -102,7 +104,7 @@ const loginBuyer = (input) => __awaiter(void 0, void 0, void 0, function* () {
     }
     // Assuming associatedStores is an array of ObjectId, we need to access the first one
     const associatedStore = user.associatedStores[0]; // Type assertion
-    const seller = yield models_1.Seller.findById(associatedStore).select('-password -email -chatId -_id -phoneNumber -tokenBlacklist -fullName -customers -createdAt -updatedAt -__v');
+    const seller = yield models_1.Seller.findById(associatedStore).select('-password -email -chatId -_id -phoneNumber -refreshToken -tokenBlacklist -fullName -customers -createdAt -updatedAt -__v');
     const catalog = yield models_1.Catalog.findById(seller === null || seller === void 0 ? void 0 : seller.catalog).select('-_id -createdAt -updatedAt -__v -seller').populate({
         path: 'products',
         select: '-__v'

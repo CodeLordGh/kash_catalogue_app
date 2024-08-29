@@ -79,19 +79,18 @@ app.post("/chat", auth_1.authenticateToken, (req, res) => __awaiter(void 0, void
         return res.status(401).json({ error: "Unauthorized" });
     }
     const { senderModel } = user;
+    // console.log("I reach here")
     try {
-        const { receiver, message, chatId } = req.body;
-        console.log(receiver, message, senderModel, chatId);
-        if (!receiver || !message || !senderModel) {
+        const { sender, message, chatId, _id, createdAt } = req.body;
+        console.log(sender, message, _id, chatId, createdAt);
+        if (!sender || !message || !chatId) {
             return res.status(400).json({ error: "All fields are required" });
         }
         const newMessage = {
-            senderModel,
-            // receiver,
+            sender: sender._id,
             message,
-            // senderModel,
-            // receiverModel,
-            timestamp: admin.database.ServerValue.TIMESTAMP,
+            _id,
+            timestamp: createdAt,
         };
         const ref = admin.database().ref(`chats/${chatId}/messages`);
         const newMessageRef = yield ref.push(newMessage);
@@ -135,7 +134,7 @@ app.use((err, req, res, next) => {
 // Start the server
 const PORT = process.env.PORT || 3000;
 mongoose_1.default
-    .connect(MONGODB_URI)
+    .connect("mongodb://127.0.0.1:27017/vendex")
     .then(() => {
     console.log("Connected to MongoDB");
     app.listen(PORT, () => {

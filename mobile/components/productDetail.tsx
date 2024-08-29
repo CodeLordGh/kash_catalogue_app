@@ -9,7 +9,7 @@ const ProductDetails: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const { selectedColor, selectedSize, quantity, selectedProduct } = useSelector((state:any) => state.action);
-  console.log(selectedProduct.sizes)
+  // console.log(selectedProduct)
   
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
 

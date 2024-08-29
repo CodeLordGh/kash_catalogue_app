@@ -12,6 +12,7 @@ import {
   loginBuyer
 } from '../Services/buyerService';
 import { generateAccessToken } from './seller';
+import { authenticateToken } from '../Utils/auth';
 
 interface CustomRequest extends express.Request {
   buyerId?: string;
@@ -140,5 +141,8 @@ router.get('/orders/:orderId', async (req:CustomRequest, res) => {
     res.status(400).json({ message: error.message });
   }
 });
+router.post('/logout',authenticateToken, (req, res) => {
+  res.sendStatus(200); 
+})
 
 export default router;

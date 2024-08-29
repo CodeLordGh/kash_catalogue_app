@@ -33,7 +33,7 @@ router.post('/seller/register', (req, res) => __awaiter(void 0, void 0, void 0, 
         const salt = yield bcrypt_1.default.genSalt(10);
         const hashedPassword = yield bcrypt_1.default.hash(password, salt);
         // generate a storeId
-        const storeId = businessName + "-" + generateStoreId(businessName);
+        const storeId = businessName + "-" + generateStoreId();
         // Create new seller
         const newSeller = new models_1.Seller({
             fullName,
@@ -57,9 +57,12 @@ const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || 'access_secret';
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || 'refresh_secret';
 // Login route
 router.post('/seller/login', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let products;
     try {
         const { email, password } = req.body;
-        const seller = yield models_1.Seller.findOne({ email });
+        const seller = yield models_1.Seller.findOne({ email }).select('-refreshToken -createdAt -__v');
+        if (seller)
+            products = yield models_1.Catalog.find({ catalog: seller.catalog });
         if (!seller || !(yield bcrypt_1.default.compare(password, seller.password))) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
@@ -67,7 +70,8 @@ router.post('/seller/login', (req, res) => __awaiter(void 0, void 0, void 0, fun
         const refreshToken = jsonwebtoken_1.default.sign({ id: seller._id }, REFRESH_TOKEN_SECRET, { expiresIn: '30d' });
         seller.refreshToken = refreshToken;
         yield seller.save();
-        res.json({ accessToken, refreshToken, storeId: seller.storeId });
+        seller.password = ""; //undefined as any
+        res.status(200).json({ accessToken, user: seller, products });
     }
     catch (error) {
         res.status(500).json({ message: 'Error logging in', error });
@@ -137,7 +141,7 @@ router.post('/seller/logout', auth_1.authenticateToken, (req, res) => __awaiter(
 function generateAccessToken(id) {
     return jsonwebtoken_1.default.sign({ id }, ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
 }
-function generateStoreId(name) {
+function generateStoreId() {
     return Math.floor(100000 + Math.random() * 900000);
 }
 exports.default = router;

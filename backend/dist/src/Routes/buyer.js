@@ -15,12 +15,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const buyerService_1 = require("../Services/buyerService");
 const seller_1 = require("./seller");
+const auth_1 = require("../Utils/auth");
 const router = express_1.default.Router();
 // Middleware to extract buyerId from headers or query params
-const extractBuyerId = (req, res, next) => {
+const extractedId = (req, res, next) => {
     const buyerId = req.headers['buyer-id'] || req.query.buyerId;
     if (!buyerId) {
-        return res.status(400).json({ message: 'Buyer ID is required' });
+        return res.status(400).json({ message: 'User ID is required' });
     }
     req.buyerId = buyerId;
     next();
@@ -29,7 +30,7 @@ const extractBuyerId = (req, res, next) => {
 router.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { input } = req.body;
     const user = yield (0, buyerService_1.loginBuyer)(input);
-    const accessToken = (0, seller_1.generateAccessToken)(user.buyerId);
+    const accessToken = (0, seller_1.generateAccessToken)(user._id);
     res.status(200).json({ user, accessToken });
 }));
 // Register a new buyer
@@ -45,7 +46,7 @@ router.post('/register', (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
 }));
 // Update buyer profile
-router.put('/profile', extractBuyerId, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.put('/profile', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { fullName, phoneNumber } = req.body;
         yield (0, buyerService_1.updateBuyerProfile)(req.buyerId ? req.buyerId : "", fullName, phoneNumber);
@@ -56,7 +57,7 @@ router.put('/profile', extractBuyerId, (req, res) => __awaiter(void 0, void 0, v
     }
 }));
 // View catalog
-router.get('/catalog/:storeId', extractBuyerId, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get('/catalog/:storeId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { storeId } = req.params;
         const catalog = yield (0, buyerService_1.viewCatalog)(req.buyerId ? req.buyerId : "", storeId);
@@ -67,7 +68,7 @@ router.get('/catalog/:storeId', extractBuyerId, (req, res) => __awaiter(void 0, 
     }
 }));
 // Add to cart
-router.post('/cart', extractBuyerId, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post('/cart', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { productId, quantity } = req.body;
         yield (0, buyerService_1.addToCart)(req.buyerId ? req.buyerId : "", productId, quantity);
@@ -78,7 +79,7 @@ router.post('/cart', extractBuyerId, (req, res) => __awaiter(void 0, void 0, voi
     }
 }));
 // Remove from cart
-router.delete('/cart/:productId', extractBuyerId, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.delete('/cart/:productId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { productId } = req.params;
         yield (0, buyerService_1.removeFromCart)(req.buyerId ? req.buyerId : "", productId);
@@ -89,7 +90,7 @@ router.delete('/cart/:productId', extractBuyerId, (req, res) => __awaiter(void 0
     }
 }));
 // View cart
-router.get('/cart', extractBuyerId, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get('/cart', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const cart = yield (0, buyerService_1.viewCart)(req.buyerId ? req.buyerId : "");
         res.status(200).json(cart);
@@ -99,7 +100,7 @@ router.get('/cart', extractBuyerId, (req, res) => __awaiter(void 0, void 0, void
     }
 }));
 // Create order
-router.post('/order', extractBuyerId, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post('/order', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { deliveryAddress } = req.body;
         const result = yield (0, buyerService_1.createOrder)(req.buyerId ? req.buyerId : "", deliveryAddress);
@@ -110,7 +111,7 @@ router.post('/order', extractBuyerId, (req, res) => __awaiter(void 0, void 0, vo
     }
 }));
 // Get order history
-router.get('/orders', extractBuyerId, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get('/orders', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const orders = yield (0, buyerService_1.getOrderHistory)(req.buyerId ? req.buyerId : "");
         res.status(200).json(orders);
@@ -120,7 +121,7 @@ router.get('/orders', extractBuyerId, (req, res) => __awaiter(void 0, void 0, vo
     }
 }));
 // Get order details
-router.get('/orders/:orderId', extractBuyerId, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get('/orders/:orderId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { orderId } = req.params;
         const orderDetails = yield (0, buyerService_1.getOrderDetails)(req.buyerId ? req.buyerId : "", orderId);
@@ -133,4 +134,7 @@ router.get('/orders/:orderId', extractBuyerId, (req, res) => __awaiter(void 0, v
         res.status(400).json({ message: error.message });
     }
 }));
+router.post('/logout', auth_1.authenticateToken, (req, res) => {
+    res.sendStatus(200);
+});
 exports.default = router;

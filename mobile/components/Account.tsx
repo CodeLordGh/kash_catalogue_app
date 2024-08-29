@@ -16,10 +16,7 @@ const Account = () => {
   const [editMode, setEditMode] = useState(false);
   const [editedInfo, setEditedInfo] = useState({ ...userInfo });
   const navigation = useNavigation();
-  const storeId = useSelector((state:any) => state.user.shop.storeId  )
-
-  // console.log(userInfo.userAuth   )
-  // console.log(`${baseUrl}/api/seller/logout`) 
+  const storeId = useSelector((state:any) => state.user.shop.storeId  ) 
 
 // console.log(userInfo)
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
@@ -47,7 +44,7 @@ const Account = () => {
     dispatch(setLoading(false))
     
     // console.log(`${baseUrl}/api/seller/logout`) 
-    // if(userInfo.User == "Seller") {
+    if(userInfo.User == "Seller") {
       try {
         axios.post(`${baseUrl}/api/seller/logout`, null, {
           headers: {
@@ -60,7 +57,20 @@ const Account = () => {
       } catch (error:any) {
         console.log(error.response);
       }
-    // }
+    } else {
+      try {
+        axios.post(`${baseUrl}/api/seller/logout`, null, {
+          headers: {
+            Authorization: `Bearer ${userInfo.userAuth}`,
+          },
+        });
+      
+        dispatch(logoutUser());
+        navigation.navigate("Login");
+      } catch (error:any) {
+        console.log(error.response);
+      }
+    }
    
   }
 
