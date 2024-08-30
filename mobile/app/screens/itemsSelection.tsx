@@ -1,4 +1,5 @@
-import React from "react";
+
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,164 +7,165 @@ import {
   TextInput,
   Image,
   TouchableOpacity,
-  ImageSourcePropType,
   FlatList,
   Animated,
-} from "react-native";
-import { NavigationProp, useNavigation } from "@react-navigation/native";
-import { useDispatch, useSelector } from "react-redux";
-import { RootStackParamList } from "../types";
-import { setSelectedProduct } from "./actionSlice";
+  ImageBackground,
+} from 'react-native';
+import { NavigationProp, useNavigation } from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootStackParamList } from '../types';
+import { setSelectedProduct } from './actionSlice';
 import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Define interfaces for component props
-interface HeaderProps {}
-
-interface SearchBarProps {}
-
-interface ItemCardProps {
-  imageSource: ImageSourcePropType;
-  product: {
-    _id: string;
-    name: string;
-    price: number;
-    stock: string[];
-    sizes: string[];
-    updatedAt: string;
-  }
-}
-
-interface CartSummaryItemProps {
-  item: string;
+interface Product {
+  _id: string;
+  name: string;
   price: number;
-}
-const Header: React.FC<HeaderProps> = () => {
-  const shop = useSelector((state:any) => state.user.shop)
-  return (
-    <View style={styles.header}>
-      <Text style={styles.headerTitle}>{`${shop.businessName} Shop`}</Text>
-      <TouchableOpacity style={styles.settingsButton}>
-        <Ionicons name="settings-outline" size={24} color="#fff" />
-      </TouchableOpacity>
-    </View>
-  ); 
-}
-
-const SearchBar: React.FC<SearchBarProps> = () => (
-  <View style={styles.searchBar}>
-    <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
-    <TextInput style={styles.searchInput} placeholder="Search for items..." placeholderTextColor="#666" />
-  </View>
-);
-
-const ItemCard: React.FC<ItemCardProps> = ({ product, imageSource }) => {
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-  const dispatch = useDispatch();
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
-
-  React.useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 1000,
-      useNativeDriver: true,
-    }).start();
-  }, []);
-
-  return (
-    <Animated.View style={[styles.itemCard, { opacity: fadeAnim }]}>
-      <Image source={imageSource} style={styles.itemImage} />
-      <Text style={styles.itemTitle}>{product.name}</Text>
-      <Text style={styles.itemPrice}>${product.price.toFixed(2)}</Text>
-      <TouchableOpacity 
-        style={styles.addToCartButton}
-        onPress={() => {
-          dispatch(setSelectedProduct(product));
-          console.log(product)
-          navigation.navigate("ProductPage");
-        }}
-      >
-        <Text style={styles.addToCartText}>View Details</Text>
-      </TouchableOpacity>
-      <View style={styles.colorOptions}>
-        <Text style={styles.colorOptionsText}>Colors:</Text>
-        {product.stock.map((color:any, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[styles.colorOption, { backgroundColor: color.color }]}
-          />
-        ))}
-      </View>
-    </Animated.View>
-  );
+  stock: { color: string }[];
+  sizes: string[];
+  updatedAt: string;
 }
 
 const ItemSelectionFragment: React.FC = () => {
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const dispatch = useDispatch();
+  const shop = useSelector((state: any) => state.user.shop);
   const catalogProducts = useSelector((state: any) => state.user.catalogProducts);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>(catalogProducts);
+
+  useEffect(() => {
+    const filtered = catalogProducts.filter((product: Product) =>
+      product.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setFilteredProducts(filtered);
+  }, [searchQuery, catalogProducts]);
+
+  const ItemCard: React.FC<{ product: Product }> = ({ product }) => {
+    const fadeAnim = React.useRef(new Animated.Value(0)).current;
+
+    React.useEffect(() => {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+    }, []);
+
+    return (
+      <Animated.View style={[styles.itemCard, { opacity: fadeAnim }]}>
+        <Image source={require('../../assets/images/downloa.png')} style={styles.itemImage} />
+        <Text style={styles.itemTitle} numberOfLines={1}>{product.name}</Text>
+        <Text style={styles.itemPrice}>${product.price.toFixed(2)}</Text>
+        <TouchableOpacity
+          style={styles.viewDetailsButton}
+          onPress={() => {
+            dispatch(setSelectedProduct(product));
+            navigation.navigate('ProductPage');
+          }}
+        >
+          <Text style={styles.viewDetailsText}>View Details</Text>
+        </TouchableOpacity>
+        <View style={styles.colorOptions}>
+          {product.stock.slice(0, 3).map((color, index) => (
+            <View
+              key={index}
+              style={[styles.colorOption, { backgroundColor: color.color }]}
+            />
+          ))}
+          {product.stock.length > 3 && (
+            <Text style={styles.moreColorsText}>+{product.stock.length - 3}</Text>
+          )}
+        </View>
+      </Animated.View>
+    );
+  };
 
   return (
-    <View style={styles.container}>
-      <Header />
+    <SafeAreaView style={styles.container}>
+      <ImageBackground
+        source={require('../../assets/images/store-banner.jpg')}
+        style={styles.banner}
+      >
+        <View style={styles.overlay} />
+        <Text style={styles.headerTitle}>{shop.businessName}</Text>
+      </ImageBackground>
       <View style={styles.content}>
-        <SearchBar />
-        <FlatList
-          data={catalogProducts}
-          renderItem={({ item }) => (
-            <ItemCard
-              product={item}
-              imageSource={require("../../assets/images/downloa.png")}
-            />
-          )}
-          keyExtractor={(item) => item._id}
-          numColumns={2}
-          contentContainerStyle={styles.itemsContainer}
-        />
+        <View style={styles.searchBar}>
+          <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search for items..."
+            placeholderTextColor="#666"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+        {filteredProducts.length === 0 ? (
+          <View style={styles.noResultsContainer}>
+            <Ionicons name="alert-circle-outline" size={64} color="#6200EE" />
+            <Text style={styles.noResultsText}>No items found</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={filteredProducts}
+            renderItem={({ item }) => <ItemCard product={item} />}
+            keyExtractor={(item) => item._id}
+            numColumns={2}
+            contentContainerStyle={styles.itemsContainer}
+            showsVerticalScrollIndicator={false}
+          />
+        )}
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#6200EE",
+    backgroundColor: '#F5F5F5',
+  },
+  banner: {
+    height: 150,
+    justifyContent: 'flex-end',
+    padding: 20,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
+    zIndex: 1,
   },
   content: {
     flex: 1,
-    backgroundColor: "#151515",
+    backgroundColor: '#F5F5F5',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
+    marginTop: -30,
     paddingTop: 20,
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 20,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#fff",
-  },
-  settingsButton: {
-    padding: 5,
-  },
   searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#222",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
     borderRadius: 25,
     marginHorizontal: 20,
     marginBottom: 20,
     paddingHorizontal: 15,
+    elevation: 3,
   },
   searchIcon: {
     marginRight: 10,
   },
   searchInput: {
     flex: 1,
-    color: "#fff",
+    color: '#333',
     fontSize: 16,
     padding: 10,
   },
@@ -171,51 +173,48 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   itemCard: {
-    backgroundColor: "#222",
+    backgroundColor: '#fff',
     borderRadius: 15,
     padding: 15,
     margin: 10,
-    alignItems: "center",
+    alignItems: 'center',
     width: '45%',
+    elevation: 3,
   },
   itemImage: {
     width: 100,
     height: 100,
-    resizeMode: "contain",
+    resizeMode: 'contain',
     marginBottom: 10,
   },
   itemTitle: {
-    color: "#fff",
+    color: '#333',
     fontSize: 16,
-    overflow: "hidden",
-    textAlign: "center",
+    fontWeight: 'bold',
+    textAlign: 'center',
     marginBottom: 5,
   },
   itemPrice: {
-    color: "#007AFF",
-    fontWeight: "bold",
+    color: '#6200EE',
+    fontWeight: 'bold',
     fontSize: 18,
     marginBottom: 10,
   },
-  addToCartButton: {
-    backgroundColor: "#007AFF",
+  viewDetailsButton: {
+    backgroundColor: '#6200EE',
     paddingVertical: 8,
     paddingHorizontal: 15,
     borderRadius: 20,
     marginTop: 5,
   },
-  addToCartText: {
-    color: "white",
-    fontWeight: "bold",
+  viewDetailsText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
   colorOptions: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginTop: 10,
-  },
-  colorOptionsText: {
-    color: "#ccc",
-    marginRight: 5,
   },
   colorOption: {
     width: 20,
@@ -223,7 +222,22 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginHorizontal: 2,
     borderWidth: 1,
-    borderColor: "#444",
+    borderColor: '#ddd',
+  },
+  moreColorsText: {
+    color: '#666',
+    fontSize: 12,
+    marginLeft: 5,
+  },
+  noResultsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noResultsText: {
+    fontSize: 18,
+    color: '#666',
+    marginTop: 16,
   },
 });
 

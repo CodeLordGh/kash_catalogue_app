@@ -1,28 +1,38 @@
-import { Ionicons } from "@expo/vector-icons";
-import React, { useState, useEffect, useCallback } from "react";
-import { StyleSheet, View, TouchableOpacity, Text } from "react-native";
-import { GiftedChat, IMessage as GiftedChatIMessage, Message } from "react-native-gifted-chat";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { ref, onChildAdded } from "firebase/database";
-import { database } from "./firebase"; // Adjust the import based on your structure
-import axios from "axios";
-import { useSelector } from "react-redux";
-import { useNavigation } from "@react-navigation/native";
-import { baseUrl } from "@/baseUrl";
+import React, { useState, useEffect, useCallback } from 'react';
+import { StyleSheet, View, TouchableOpacity, Text, Modal, Animated, Alert } from 'react-native';
+import { GiftedChat, IMessage as GiftedChatIMessage, Bubble } from 'react-native-gifted-chat';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ref, onChildAdded } from 'firebase/database';
+import { database } from './firebase';
+import axios from 'axios';
+import { useSelector } from 'react-redux';
+import { useNavigation } from '@react-navigation/native';
+import { baseUrl } from '@/baseUrl';
+import { Ionicons } from '@expo/vector-icons';
 
-// Extend the IMessage interface to include our custom properties
 interface IMessage extends GiftedChatIMessage {
   pending?: boolean;
   failed?: boolean;
 }
 
+interface ProductInfo {
+  id: string;
+  name: string;
+  price: number;
+  description: string;
+}
+
 const Chat: React.FC = () => {
   const [messages, setMessages] = useState<IMessage[]>([]);
+  const [isProductModalVisible, setProductModalVisible] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<ProductInfo | null>(null);
+  const [modalAnimation] = useState(new Animated.Value(0));
+
   const auth = useSelector((state: any) => state.user.userInfo.userAuth);
   const navigation = useNavigation();
-
   const chatId = useSelector((state: any) => state.user.chatId) as string;
   const currentUser = useSelector((state: any) => state.user.userInfo);
+  const isVendor = currentUser.User === 'Seller';
 
   useEffect(() => {
     if (!currentUser) return;
@@ -30,10 +40,8 @@ const Chat: React.FC = () => {
 
     const unsubscribe = onChildAdded(chatRef, (snapshot) => {
       const message = snapshot.val();
-
       if (message) {
         setMessages((previousMsg) => {
-          // Check if the message already exists in the list
           const messageExists = previousMsg.some((msg) => msg._id === message._id);
           if (!messageExists) {
             return [{
@@ -48,11 +56,9 @@ const Chat: React.FC = () => {
       }
     });
 
-    // Clean up the listener
     return () => unsubscribe();
   }, [chatId]);
 
-  // Function to send a message to the server
   const sendMessageToServer = async (message: IMessage) => {
     try {
       await axios.post(
@@ -70,7 +76,6 @@ const Chat: React.FC = () => {
           },
         }
       );
-      // If successful, update the message state to remove pending and failed flags
       setMessages((prevMessages) =>
         prevMessages.map((msg) =>
           msg._id === message._id
@@ -79,8 +84,7 @@ const Chat: React.FC = () => {
         )
       );
     } catch (error) {
-      console.error("Error sending message:", error);
-      // If failed, update the message state to mark it as failed
+      console.error('Error sending message:', error);
       setMessages((prevMessages) =>
         prevMessages.map((msg) =>
           msg._id === message._id
@@ -91,11 +95,9 @@ const Chat: React.FC = () => {
     }
   };
 
-  // Function to retry sending a failed message
   const retryMessage = useCallback(async (messageId: string) => {
     const messageToRetry = messages.find((msg) => msg._id === messageId);
     if (messageToRetry) {
-      // Mark the message as pending again
       setMessages((prevMessages) =>
         prevMessages.map((msg) =>
           msg._id === messageId
@@ -103,15 +105,12 @@ const Chat: React.FC = () => {
             : msg
         )
       );
-      // Try to send the message again
       await sendMessageToServer(messageToRetry);
     }
   }, [messages]);
 
   const handleSend = useCallback(async (newMessages: IMessage[] = []) => {
     const message = newMessages[0];
-
-    // Check if the message already exists before adding it
     setMessages((prevMessages) => {
       const messageExists = prevMessages.some((msg) => msg._id === message._id);
       if (!messageExists) {
@@ -119,49 +118,133 @@ const Chat: React.FC = () => {
       }
       return prevMessages;
     });
-
-    // Send the message to the server
     await sendMessageToServer(message);
   }, [chatId, auth]);
 
-  // Custom render function for messages
-  const renderMessage = useCallback((props: any) => {
+  const renderBubble = (props: any) => {
     const { currentMessage } = props;
+    const productIdRegex = /\b\d{6}\b/;
+    const match = currentMessage.text.match(productIdRegex);
+
+    if (isVendor && match) {
+      return (
+        <TouchableOpacity onPress={() => handleProductPress(match[0])}>
+          <Bubble
+            {...props}
+            wrapperStyle={{
+              right: {
+                backgroundColor: '#6200EE',
+              },
+              left: {
+                backgroundColor: '#f0f0f0',
+              },
+            }}
+          />
+        </TouchableOpacity>
+      );
+    }
+
     return (
-      <View>
-        <Message {...props} />
-        {currentMessage.pending && (
-          <Text style={styles.pendingText}>Sending...</Text>
-        )}
-        {currentMessage.failed && (
-          <TouchableOpacity onPress={() => retryMessage(currentMessage._id)}>
-            <Text style={styles.failedText}>
-              Failed to send. Tap to retry.
-            </Text>
-          </TouchableOpacity>
-        )}
-      </View>
+      <Bubble
+        {...props}
+        wrapperStyle={{
+          right: {
+            backgroundColor: '#6200EE',
+          },
+          left: {
+            backgroundColor: '#f0f0f0',
+          },
+        }}
+      />
     );
-  }, [retryMessage]);
+  };
+
+  const handleProductPress = async (productId: string) => {
+    try {
+      const response = await axios.get(`${baseUrl}/api/products/${productId}`, {
+        headers: {
+          Authorization: `Bearer ${auth}`,
+        },
+      });
+      setSelectedProduct(response.data);
+      setProductModalVisible(true);
+      Animated.timing(modalAnimation, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } catch (error) {
+      console.error('Error fetching product info:', error);
+      Alert.alert("Error fetching product info")
+    }
+  };
+
+  const closeProductModal = () => {
+    Animated.timing(modalAnimation, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setProductModalVisible(false);
+      setSelectedProduct(null);
+    });
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity
-        onPress={() => navigation.goBack()}
-        style={{ paddingLeft: 20 }}
-      >
-        <Ionicons name="arrow-back" size={24} color="white" />
-      </TouchableOpacity>
-      <View style={styles.messageList}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="white" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Chat</Text>
+      </View>
+      <View style={styles.chatContainer}>
         <GiftedChat
           messages={messages}
           onSend={(newMessages: IMessage[]) => handleSend(newMessages)}
           user={{
             _id: currentUser.userId,
           }}
-          renderMessage={renderMessage}
+          renderBubble={renderBubble}
+          renderAvatar={null}
+          bottomOffset={80}
         />
       </View>
+      <Modal
+        visible={isProductModalVisible}
+        transparent={true}
+        animationType="none"
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPress={closeProductModal}
+        >
+          <Animated.View 
+            style={[
+              styles.productInfoCard,
+              {
+                transform: [
+                  {
+                    translateY: modalAnimation.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [300, 0],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
+            {selectedProduct && (
+              <>
+                <Text style={styles.productTitle}>{selectedProduct.name}</Text>
+                <Text style={styles.productPrice}>Price: ${selectedProduct.price.toFixed(2)}</Text>
+                <Text style={styles.productDescription}>{selectedProduct.description}</Text>
+              </>
+            )}
+          </Animated.View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -169,64 +252,53 @@ const Chat: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 20,
-    backgroundColor: "#6200EE",
+    backgroundColor: '#6200EE',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#f5f5f5",
-    margin: 20,
-    textAlign: "center",
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
   },
-  messageList: {
+  backButton: {
+    marginRight: 16,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  chatContainer: {
     flex: 1,
-    padding: 10,
-    borderTopEndRadius: 40,
-    borderTopStartRadius: 40,
-    backgroundColor: "#151515",
+    backgroundColor: '#f5f5f5',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    overflow: 'hidden',
   },
-  messageItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 10,
-    backgroundColor: "#343434",
-    borderRadius: 10,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  productInfoCard: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    minHeight: 200,
+  },
+  productTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
     marginBottom: 10,
   },
-  imageContainer: {
-    marginRight: 10,
+  productPrice: {
+    fontSize: 16,
+    color: '#6200EE',
+    marginBottom: 10,
   },
-  image: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-  },
-  messageContent: {
-    flex: 1,
-  },
-  name: {
-    fontWeight: "bold",
-    color: "#f5f5f5",
-  },
-  message: {
+  productDescription: {
     fontSize: 14,
-    color: "#f5f5f5",
-  },
-  time: {
-    fontSize: 12,
-    color: "#808080",
-  },
-  pendingText: {
-    fontSize: 12,
-    color: "#888",
-    fontStyle: 'italic',
-    marginLeft: 10,
-  },
-  failedText: {
-    fontSize: 12,
-    color: 'red',
-    marginLeft: 10,
+    color: '#333',
   },
 });
 
