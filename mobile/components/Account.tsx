@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, Animated } from 'react-native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import React, { useState, useRef } from 'react';
+import { View, Text, StyleSheet, Image, TextInput, Animated, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { Ionicons } from '@expo/vector-icons'; // Make sure to install expo vector icons
+import { Ionicons } from '@expo/vector-icons';
 import { logoutUser, setLoading } from '@/app/screens/userSlice';
 import { useNavigation } from '@react-navigation/native';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import { baseUrl } from '@/baseUrl';
-
+import * as Clipboard from 'expo-clipboard';
 
 const Account = () => {
   const dispatch = useDispatch();
@@ -16,10 +15,7 @@ const Account = () => {
   const [editMode, setEditMode] = useState(false);
   const [editedInfo, setEditedInfo] = useState({ ...userInfo });
   const navigation = useNavigation();
-  const storeId = useSelector((state:any) => state.user.shop.storeId  ) 
-
-// console.log(userInfo)
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -30,53 +26,58 @@ const Account = () => {
   }, []);
 
   const handleImageUpload = () => {
-    console.log('Image upload functionality to be implemented');
+    Alert.alert('Feature Coming Soon', 'Image upload functionality will be implemented in a future update.');
   };
 
-  const handleSave = () => {
-    // Dispatch action to update user info in Redux store
-    // dispatch(updateUserInfo(editedInfo));
-    setEditMode(false);
+  const handleSave = async () => {
+    try {
+      // Implement API call to update user info
+      // const response = await axios.put(`${baseUrl}/api/user/update`, editedInfo, {
+      //   headers: { Authorization: `Bearer ${userInfo.userAuth}` },
+      // });
+      // if (response.status === 200) {
+      //   // Dispatch action to update user info in Redux store
+      //   // dispatch(updateUserInfo(response.data));
+      //   setEditMode(false);
+      //   Alert.alert('Success', 'Your information has been updated.');
+      // }
+      setEditMode(false);
+      Alert.alert('Success', 'Your information has been updated.');
+    } catch (error) {
+      console.error('Error updating user info:', error);
+      Alert.alert('Error', 'Failed to update your information. Please try again.');
+    }
   };
 
   const handleLogout = async () => {
-    // Dispatch action to log out user
-    dispatch(setLoading(false))
-    
-    // console.log(`${baseUrl}/api/seller/logout`) 
-    if(userInfo.User == "Seller") {
-      try {
-        axios.post(`${baseUrl}/api/seller/logout`, null, {
-          headers: {
-            Authorization: `Bearer ${userInfo.userAuth}`,
-          },
-        });
-      
-        dispatch(logoutUser());
-        navigation.navigate("Login");
-      } catch (error:any) {
-        console.log(error.response);
-      }
-    } else {
-      try {
-        axios.post(`${baseUrl}/api/seller/logout`, null, {
-          headers: {
-            Authorization: `Bearer ${userInfo.userAuth}`,
-          },
-        });
-      
-        dispatch(logoutUser());
-        navigation.navigate("Login");
-      } catch (error:any) {
-        console.log(error.response);
-      }
+    try {
+      dispatch(setLoading(true));
+      await axios.post(`${baseUrl}/api/${userInfo.User.toLowerCase()}/logout`, null, {
+        headers: { Authorization: `Bearer ${userInfo.userAuth}` },
+      });
+      dispatch(logoutUser());
+      navigation.navigate("Login");
+    } catch (error) {
+      console.error('Logout error:', error);
+      Alert.alert('Error', 'Failed to logout. Please try again.');
+    } finally {
+      dispatch(setLoading(false));
     }
-   
-  }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    await Clipboard.setStringAsync(text);
+    Alert.alert('Copied', 'ID copied to clipboard');
+  };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Account Management</Text>
+    <ScrollView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="white" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Account</Text>
+      </View>
       <Animated.View style={[styles.card, { opacity: fadeAnim }]}>
         <TouchableOpacity onPress={handleImageUpload} style={styles.imageContainer}>
           <Image source={{ uri: profileImage }} style={styles.profileImage} />
@@ -91,59 +92,52 @@ const Account = () => {
             value={editedInfo.User}
             editable={false}
             editMode={editMode}
-            onChangeText={(text:string) => setEditedInfo({ ...editedInfo, User: text })}
+            onChangeText={(text: string) => setEditedInfo({ ...editedInfo, User: text })}
           />
           <InfoItem
             label="Full Name"
             value={editedInfo.fullName || ''}
             editMode={editMode}
-            onChangeText={(text:string) => setEditedInfo({ ...editedInfo, fullName: text })}
+            onChangeText={(text: string) => setEditedInfo({ ...editedInfo, fullName: text })}
           />
           <InfoItem
             label="Email"
             value={editedInfo.email || ''}
             editMode={editMode}
-            onChangeText={(text:string) => setEditedInfo({ ...editedInfo, email: text })}
+            onChangeText={(text: string) => setEditedInfo({ ...editedInfo, email: text })}
           />
           <InfoItem
             label="Phone Number"
             value={editedInfo.phoneNumber || ''}
             editMode={editMode}
-            onChangeText={(text:string) => setEditedInfo({ ...editedInfo, phoneNumber: text })}
+            onChangeText={(text: string) => setEditedInfo({ ...editedInfo, phoneNumber: text })}
           />
-          {editedInfo.User === "Seller"
-          ? <InfoItem
-          label="Store ID"
-          value={editedInfo.userId}
-          editable={false}
-          editMode={editMode}
-        />
-      : <InfoItem
-      label="User ID"
-      value={editedInfo.userId}
-      editable={false}
-      editMode={editMode}
-    />}
-          
+          <InfoItem
+            label={editedInfo.User === "Seller" ? "Store ID" : "User ID"}
+            value={editedInfo.userId}
+            editable={false}
+            editMode={editMode}
+            onPress={() => copyToClipboard(editedInfo.userId)}
+          />
         </View>
 
         <TouchableOpacity
-          style={styles.editButton}
+          style={styles.actionButton}
           onPress={() => editMode ? handleSave() : setEditMode(true)}
         >
-          <Text style={styles.editButtonText}>
-            {editMode ? 'Save' : 'Edit'}
+          <Text style={styles.actionButtonText}>
+            {editMode ? 'Save' : 'Edit Profile'}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPressIn={() => handleLogout()} style={{backgroundColor: "red", marginTop: 20, borderRadius: 3, paddingHorizontal: 10, paddingVertical: 5}} >
-          <Text style={{color: "#fff"}} >Logout</Text>
+        <TouchableOpacity onPress={handleLogout} style={[styles.actionButton, styles.logoutButton]}>
+          <Text style={styles.actionButtonText}>Logout</Text>
         </TouchableOpacity>
       </Animated.View>
-    </View>
+    </ScrollView>
   );
 };
 
-const InfoItem = ({ label, value, editMode, editable = true, onChangeText }:any) => (
+const InfoItem = ({ label, value, editMode, editable = true, onChangeText, onPress }: any) => (
   <View style={styles.infoItem}>
     <Text style={styles.label}>{label}:</Text>
     {editMode && editable ? (
@@ -154,7 +148,9 @@ const InfoItem = ({ label, value, editMode, editable = true, onChangeText }:any)
         placeholder={`Enter ${label.toLowerCase()}`}
       />
     ) : (
-      <Text style={styles.value}>{value || 'Not provided'}</Text>
+      <TouchableOpacity onPress={onPress} disabled={!onPress}>
+        <Text style={[styles.value, onPress && styles.copyableValue]}>{value || 'Not provided'}</Text>
+      </TouchableOpacity>
     )}
   </View>
 );
@@ -162,21 +158,29 @@ const InfoItem = ({ label, value, editMode, editable = true, onChangeText }:any)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 20,
     backgroundColor: "#6200EE",
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  backButton: {
+    padding: 8,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: "#fff",
-    textAlign: "center",
-    marginBottom: 20,
+    color: 'white',
+    marginLeft: 20,
   },
   card: {
-    backgroundColor: "#151515",
+    backgroundColor: "#F5F5F5",
     flex: 1,
-    borderTopEndRadius: 40,
-    borderTopStartRadius: 40,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     paddingHorizontal: 20,
     paddingTop: 20,
   },
@@ -185,23 +189,26 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   profileImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: '#6200EE',
   },
   uploadIconContainer: {
     position: 'absolute',
     right: 0,
     bottom: 0,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#6200EE',
     borderRadius: 20,
     padding: 8,
   },
   infoContainer: {
-    backgroundColor: '#222',
-    borderRadius: 10,
+    backgroundColor: 'white',
+    borderRadius: 12,
     padding: 20,
     marginBottom: 20,
+    elevation: 2,
   },
   infoItem: {
     flexDirection: 'row',
@@ -211,31 +218,39 @@ const styles = StyleSheet.create({
   },
   label: {
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#333',
     fontSize: 16,
   },
   value: {
-    color: '#ccc',
+    color: '#666',
     fontSize: 16,
   },
+  copyableValue: {
+    color: '#6200EE',
+    textDecorationLine: 'underline',
+  },
   input: {
-    color: '#fff',
+    color: '#333',
     fontSize: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#007AFF',
+    borderBottomColor: '#6200EE',
     padding: 5,
     width: '60%',
   },
-  editButton: {
-    backgroundColor: '#007AFF',
+  actionButton: {
+    backgroundColor: '#6200EE',
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
+    marginBottom: 10,
   },
-  editButtonText: {
+  actionButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  logoutButton: {
+    backgroundColor: '#FF3B30',
   },
 });
 

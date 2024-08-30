@@ -12,6 +12,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "./types";
 import { useNavigation } from "@react-navigation/native";
 import { useSelector } from "react-redux";
+import { baseUrl } from "@/baseUrl";
 
 type RegisterScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -93,12 +94,11 @@ const RegisterScreen = () => {
   const [option, setActiveOption] = useState("storeId");
   const [isLoading, setisLoading] = useState(false);
   const navigation = useNavigation<RegisterScreenNavigationProp>();
-  const baseUrl = useSelector((state: any) => state.user.baseUrl);
 
   // RegisterScreen component
   const handleRegister = async () => {
     // console.log(storeId);
-    console.log("run step 1");
+    // console.log("run step 1");
 
       if (option === "storeId") {
         console.log("run step 2");
@@ -122,7 +122,7 @@ const RegisterScreen = () => {
         
       } else if (option === "seller") {
         // Register as a seller
-        console.log("run step 3");
+        // console.log("run step 3");
         console.log(baseUrl);
 
         try {

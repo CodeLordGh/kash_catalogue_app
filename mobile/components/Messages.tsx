@@ -1,15 +1,14 @@
-import { ChatParamList } from "@/app/types";
-import { useNavigation } from "@react-navigation/native";
-import { StackNavigationProp } from "@react-navigation/stack";
-import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
-import { ref, onValue } from "firebase/database";
-import { database } from "@/app/firebase";
-import { retrieveStoreId, retrieveToken } from "@/app/token";
-import { useSelector } from "react-redux";
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, ActivityIndicator } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
+import { useSelector } from 'react-redux';
+import { ref, onValue } from 'firebase/database';
+import { database } from '@/app/firebase';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { ChatParamList } from '@/app/types';
 
-type GoToChat = StackNavigationProp<ChatParamList, "Chat">;
+type GoToChat = StackNavigationProp<ChatParamList, 'Chat'>;
 
 interface Message {
   _id: string;
@@ -22,65 +21,20 @@ interface Message {
   time: string;
 }
 
-export interface MessageList {
+interface MessageList {
   message: string;
   sender: string;
   timestamp: number;
 }
 
-interface MessageItemProps {
-  messages: MessageList[];
-  time: string;
-  image: string;
-  id: string;
-  receiverId: string;
-  storeId: string;
-  buyerId: string;
-}
-
-const MessageItem = ({
-  messages,
-  image,
-  buyerId,
-  storeId,
-  id,
-}: MessageItemProps) => {
-  const navigation = useNavigation<GoToChat>();
-
-  const handlePress = () => {
-    navigation.navigate("Chat", {
-      currentUser: { id: id, model: "Seller" },
-      buyerId: buyerId,
-      storeId,
-    });
-  };
-
-  const date = new Date(messages[0].timestamp);
-  const date2 = date.toLocaleString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  // console.log(date2);
-  
-  return (
-    <TouchableOpacity onPress={handlePress} style={styles.messageItem}>
-      <Image source={{ uri: image }} style={styles.image} />
-      <View style={styles.messageContent}>
-        <Text style={styles.name}>{buyerId}</Text>
-        <Text style={styles.message}>{messages[0].message}</Text>
-        <Text style={styles.time}>{date2}</Text>
-      </View>
-    </TouchableOpacity>
-  );
-};
-
 const Messages = () => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const userId = useSelector((state:any) => state.user.userInfo.userId)
-  const navigation = useNavigation()
+  const [loading, setLoading] = useState(true);
+  const userId = useSelector((state: any) => state.user.userInfo.userId);
+  const navigation = useNavigation<GoToChat>();
 
   useEffect(() => {
-    const chatRef = ref(database, "chats");
+    const chatRef = ref(database, 'chats');
 
     onValue(chatRef, (snapshot) => {
       const data = snapshot.val();
@@ -89,38 +43,69 @@ const Messages = () => {
           _id: key,
           ...data[key],
         }));
-        // console.log(messageList[0])
-        // Filter messages based on the storeId of the seller
         const filteredMessages = messageList.filter(
-          (chat: any) => {
-            // console.log(chat.storeId == userId, chat.buyerId, userId)
-            return chat.storeId === userId
-          }
-        ) as any;
-        // console.log(filteredMessages.length)
+          (chat: any) => chat.storeId === userId
+        ) as Message[];
         setMessages(filteredMessages);
       }
+      setLoading(false);
     });
-  }, []);
+  }, [userId]);
+
+  const renderMessageItem = ({ item }: { item: Message }) => {
+    const handlePress = () => {
+      navigation.navigate('Chat', {
+        currentUser: { id: item._id, model: 'Seller' },
+        buyerId: item.buyerId,
+        storeId: item.storeId,
+      });
+    };
+
+    const date = new Date(item.messages[0].timestamp);
+    const formattedTime = date.toLocaleString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    return (
+      <TouchableOpacity style={styles.messageItem} onPress={handlePress}>
+        <Image source={{ uri: item.image }} style={styles.avatar} />
+        <View style={styles.messageContent}>
+          <Text style={styles.buyerId}>{item.buyerId}</Text>
+          <Text style={styles.lastMessage} numberOfLines={1}>
+            {item.messages[0].message}
+          </Text>
+        </View>
+        <Text style={styles.time}>{formattedTime}</Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Messages</Text>
-      <View style={styles.messageList}>
-        <ScrollView>
-          {messages.map((msg) => (
-            <MessageItem
-              key={msg._id}
-              id={msg._id}
-              buyerId={msg.buyerId}
-              messages={msg.messages}
-              time={msg.time}
-              image={msg.image}
-              storeId={msg.storeId}
-              receiverId={msg.buyerId}
-            />
-          ))}
-        </ScrollView>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="white" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Messages</Text>
+      </View>
+
+      <View style={styles.messagesContainer}>
+        {loading ? (
+          <ActivityIndicator size="large" color="#6200EE" />
+        ) : messages.length > 0 ? (
+          <FlatList
+            data={messages}
+            renderItem={renderMessageItem}
+            keyExtractor={(item) => item._id}
+            showsVerticalScrollIndicator={false}
+          />
+        ) : (
+          <View style={styles.emptyState}>
+            <Ionicons name="chatbubble-ellipses-outline" size={64} color="#6200EE" />
+            <Text style={styles.emptyStateText}>No messages yet</Text>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -129,52 +114,74 @@ const Messages = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#6200EE",
+    backgroundColor: '#6200EE',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  backButton: {
+    padding: 8,
   },
   title: {
     fontSize: 24,
-    fontWeight: "bold",
-    color: "#f5f5f5",
-    margin: 20,
-    textAlign: "center",
+    fontWeight: 'bold',
+    color: 'white',
+    marginLeft: 20,
   },
-  messageList: {
+  messagesContainer: {
     flex: 1,
-    padding: 10,
-    borderTopEndRadius: 40,
-    borderTopStartRadius: 40,
-    backgroundColor: "#151515",
+    backgroundColor: '#F5F5F5',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    paddingTop: 20,
+    paddingHorizontal: 20,
   },
   messageItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 10,
-    backgroundColor: "#343434",
-    borderRadius: 10,
-    marginBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    marginBottom: 16,
+    padding: 16,
+    elevation: 2,
   },
-  imageContainer: {
-    marginRight: 10,
-  },
-  image: {
+  avatar: {
     width: 50,
     height: 50,
     borderRadius: 25,
+    marginRight: 16,
   },
   messageContent: {
     flex: 1,
   },
-  name: {
-    fontWeight: "bold",
-    color: "#f5f5f5",
+  buyerId: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
   },
-  message: {
+  lastMessage: {
     fontSize: 14,
-    color: "#f5f5f5",
+    color: '#666',
   },
   time: {
     fontSize: 12,
-    color: "#808080",
+    color: '#999',
+    marginLeft: 8,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyStateText: {
+    fontSize: 18,
+    color: '#666',
+    marginTop: 16,
   },
 });
 

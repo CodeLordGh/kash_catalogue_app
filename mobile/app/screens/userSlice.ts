@@ -29,6 +29,7 @@ interface UserState {
   };
   loading: boolean;
   products: Product[],
+  orders: []
 }
 
 const initialState: UserState = {
@@ -46,6 +47,7 @@ const initialState: UserState = {
   },
   loading: false,
   products: [],
+  orders: []
 };
 
 const userSlice = createSlice({
@@ -73,6 +75,9 @@ const userSlice = createSlice({
     setProducts: (state, action:PayloadAction<Product[]>) =>{
       state.products = action.payload
     },
+    setOrders: (state, action:PayloadAction<any>) =>{
+      state.products = action.payload
+    },
     logoutUser: (state) => {
       state.chatId = [];
       state.cartProducts = [];
@@ -92,5 +97,5 @@ const userSlice = createSlice({
   },
 });
 
-export const { setChatId, setCartProducts, setCatalogProducts, setUserInfo, setShop, setLoading, setProducts, logoutUser } = userSlice.actions;
+export const { setChatId, setCartProducts, setCatalogProducts, setUserInfo, setShop, setLoading, setProducts, logoutUser, setOrders } = userSlice.actions;
 export default userSlice.reducer;
