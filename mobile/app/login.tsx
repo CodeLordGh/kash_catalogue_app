@@ -16,7 +16,9 @@ import axios from 'axios';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from './types';
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import { setCartProducts, setCatalogProducts, setChatId, setProducts, setShop, setUserInfo } from './screens/userSlice';
+import { useDispatch } from 'react-redux';
+import { baseUrl } from '@/baseUrl';
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -28,6 +30,7 @@ const LoginScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const dispatch = useDispatch()
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
@@ -51,12 +54,11 @@ const LoginScreen = () => {
     try {
       if (option === 'storeId') {
         // Implement store login logic here
-        await axios.post('https://czc9hkp8-3000.uks1.devtunnels.ms/api/store/login', { storeId });
-        navigation.navigate('BuyerMainScreen');
+        const res = await axios.post(`${baseUrl}/api/login`, { input: storeId });
+                handleBuyerLogin(res.data);
       } else {
-        const response = await axios.post('https://czc9hkp8-3000.uks1.devtunnels.ms/api/login', { email, password });
-        const userType = response.data.userType;
-        navigation.navigate(userType === 'seller' ? 'SellerMainScreen' : 'BuyerMainScreen');
+        const res = await axios.post(`${baseUrl}/api/seller/login`, { email, password });
+        handleSellerLogin(res.data);
       }
     } catch (error: any) {
       Alert.alert(
@@ -67,6 +69,41 @@ const LoginScreen = () => {
       setIsLoading(false);
     }
   };
+  const handleSellerLogin = (data: any) => {
+        dispatch(setUserInfo({
+          userId: data.user.storeId,
+          userAuth: data.accessToken,
+          User: 'Seller',
+          email: data.user.email,
+          fullName: data.user.fullName
+        }));
+        dispatch(setChatId(data.user.chatId));
+        dispatch(setProducts(data.products));
+        dispatch(setShop({
+          businessName: data.user.businessName,
+          storeId: data.user.storeId,
+        }));
+        navigation.replace('SellerMainScreen');
+      };
+    
+      const handleBuyerLogin = ( data: any) => {
+        dispatch(setChatId(data.user.chatId));
+        dispatch(setCartProducts(data.user.cart));
+        dispatch(setCatalogProducts(data.user.catalog.products));
+        dispatch(setUserInfo({
+          User: data.user.type,
+          userId: data.user.buyerId,
+          fullName: data.user.fullName,
+          email: data.user.email,
+          phoneNumber: data.user.phoneNumber,
+          userAuth: data.accessToken
+        }));
+        dispatch(setShop({
+          businessName: data.user.seller.businessName,
+          storeId: data.user.seller.storeId,
+        }));
+        navigation.navigate('BuyerMainScreen');
+      };
 
   const renderInput = (
     placeholder: string,
@@ -103,7 +140,7 @@ const LoginScreen = () => {
               onPress={() => setActiveOption('storeId')}
             >
               <Text style={[styles.optionText, option === 'storeId' && styles.activeOptionText]}>
-                Join Store
+                My Account
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -111,13 +148,13 @@ const LoginScreen = () => {
               onPress={() => setActiveOption('seller')}
             >
               <Text style={[styles.optionText, option === 'seller' && styles.activeOptionText]}>
-                Seller
+                My Store
               </Text>
             </TouchableOpacity>
           </View>
 
           {option === 'storeId'
-            ? renderInput('Enter Store ID', storeId, setStoreId, errors.storeId)
+            ? renderInput('Enter User ID', storeId, setStoreId, errors.storeId)
             : (
               <>
                 {renderInput('Email', email, setEmail, errors.email)}

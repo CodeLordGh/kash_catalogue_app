@@ -52,9 +52,15 @@ const Account = () => {
   const handleLogout = async () => {
     try {
       dispatch(setLoading(true));
-      await axios.post(`${baseUrl}/api/${userInfo.User.toLowerCase()}/logout`, null, {
-        headers: { Authorization: `Bearer ${userInfo.userAuth}` },
-      });
+      if (userInfo.User === "User") {
+        await axios.post(`${baseUrl}/api/logout`, null, {
+          headers: { Authorization: `Bearer ${userInfo.userAuth}` },
+        });
+      }else {
+        await axios.post(`${baseUrl}/api/seller/logout`, null, {
+          headers: { Authorization: `Bearer ${userInfo.userAuth}` },
+        });
+      }
       dispatch(logoutUser());
       navigation.navigate("Login");
     } catch (error) {

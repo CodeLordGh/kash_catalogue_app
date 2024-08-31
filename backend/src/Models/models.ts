@@ -1,8 +1,8 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document } from "mongoose";
 
 // Seller Schema
 interface ISeller extends Document {
-    _id: mongoose.Types.ObjectId;
+  _id: mongoose.Types.ObjectId;
   fullName: string;
   businessName: string;
   phoneNumber: string;
@@ -14,67 +14,80 @@ interface ISeller extends Document {
   catalog: mongoose.Types.ObjectId;
   customers: mongoose.Types.ObjectId[];
   deliveryAddresses: mongoose.Types.ObjectId[];
-  chatId: string
+  chatId: string;
 }
 
-const SellerSchema: Schema = new Schema({
-  fullName: { type: String, required: true },
-  refreshToken: {type: String},
-  tokenBlacklist: [],
-  businessName: { type: String, required: true },
-  phoneNumber: { type: String, sparse: true},
-  password: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  storeId: { type: String, required: true, unique: true },
-  catalog: { type: Schema.Types.ObjectId, ref: 'Catalog' },
-  customers: [{ type: Schema.Types.ObjectId, ref: 'Buyer' }],
-  deliveryAddresses: [{ type: Schema.Types.ObjectId, ref: 'DeliveryAddress' }],
-  chatId: [{ type: String }]
-}, { timestamps: true });
+const SellerSchema: Schema = new Schema(
+  {
+    fullName: { type: String, required: true },
+    refreshToken: { type: String },
+    tokenBlacklist: [],
+    businessName: { type: String, required: true },
+    phoneNumber: { type: String, sparse: true },
+    password: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    storeId: { type: String, required: true, unique: true },
+    catalog: { type: Schema.Types.ObjectId, ref: "Catalog" },
+    customers: [{ type: Schema.Types.ObjectId, ref: "Buyer" }],
+    deliveryAddresses: [
+      { type: Schema.Types.ObjectId, ref: "DeliveryAddress" },
+    ],
+    chatId: [{ type: String }],
+  },
+  { timestamps: true }
+);
 
-export const Seller = mongoose.model<ISeller>('Seller', SellerSchema);
+export const Seller = mongoose.model<ISeller>("Seller", SellerSchema);
 
 // Buyer Schema
 interface IBuyer extends Document {
-    _id: mongoose.Types.ObjectId;
+  _id: mongoose.Types.ObjectId;
   fullName: string;
   buyerId: string;
   phoneNumber: string;
   cart: {
-    product: mongoose.Types.ObjectId ;
+    product: mongoose.Types.ObjectId;
     quantity: {
       color: string;
       qty: number;
-    }
+    };
   }[];
   serviceProvider: string;
   associatedStores: mongoose.Types.ObjectId[];
-  chatId: string
+  chatId: string;
 }
 
-const BuyerSchema: Schema = new Schema({
-  fullName: { type: String },
-  buyerId: { type: String, unique: true },
-  serviceProvider: { type: String },
-  cart: [{
-    product: { type: Schema.Types.ObjectId, ref: 'Product' },
-    quantity: {
-      color: { type: String },
-      qty: { type: Number }
-    }
-  }],
-  orders: [{ type: Schema.Types.ObjectId, ref: "Order" }],
-  associatedStores: [{ type: Schema.Types.ObjectId, ref: 'Seller' }],
-  chatId: { type: String }
-}, { timestamps: true });
+const BuyerSchema: Schema = new Schema(
+  {
+    fullName: { type: String },
+    buyerId: { type: String, unique: true },
+    serviceProvider: { type: String },
+    cart: [
+      {
+        product: { type: Schema.Types.ObjectId, ref: "Product" },
+        quantity: {
+          color: { type: String },
+          qty: { type: Number },
+        },
+      },
+    ],
+    orders: [{ type: Schema.Types.ObjectId, ref: "Order" }],
+    associatedStores: [{ type: Schema.Types.ObjectId, ref: "Seller" }],
+    chatId: { type: String },
+  },
+  { timestamps: true }
+);
 
-BuyerSchema.index({ phoneNumber: 1, buyerId: 1 }, { unique: true, sparse: true });
+BuyerSchema.index(
+  { phoneNumber: 1, buyerId: 1 },
+  { unique: true, sparse: true }
+);
 
-export const Buyer = mongoose.model<IBuyer>('Buyer', BuyerSchema);
+export const Buyer = mongoose.model<IBuyer>("Buyer", BuyerSchema);
 
 // Delivery Address Schema
 interface IDeliveryAddress extends Document {
-    _id: mongoose.Types.ObjectId;
+  _id: mongoose.Types.ObjectId;
   seller: mongoose.Types.ObjectId;
   name: string;
   street: string;
@@ -84,59 +97,72 @@ interface IDeliveryAddress extends Document {
   postalCode: string;
 }
 
-const DeliveryAddressSchema: Schema = new Schema({
-  seller: { type: Schema.Types.ObjectId, ref: 'Seller', required: true },
-  name: { type: String, required: true },
-  street: { type: String, required: true },
-  city: { type: String, required: true },
-  state: { type: String, required: true },
-  country: { type: String, required: true },
-  postalCode: { type: String, required: true }
-}, { timestamps: true });
+const DeliveryAddressSchema: Schema = new Schema(
+  {
+    seller: { type: Schema.Types.ObjectId, ref: "Seller", required: true },
+    name: { type: String, required: true },
+    street: { type: String, required: true },
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    country: { type: String, required: true },
+    postalCode: { type: String, required: true },
+  },
+  { timestamps: true }
+);
 
-export const DeliveryAddress = mongoose.model<IDeliveryAddress>('DeliveryAddress', DeliveryAddressSchema);
+export const DeliveryAddress = mongoose.model<IDeliveryAddress>(
+  "DeliveryAddress",
+  DeliveryAddressSchema
+);
 
 // Product Schema
 export interface IProduct extends Document {
-    _id: mongoose.Types.ObjectId;
+  _id: mongoose.Types.ObjectId;
   name: string;
   description: string;
   price: number;
-  stock: [{color: string, qty: number}];
+  stock: [{ color: string; qty: number; }];
   catalog: mongoose.Types.ObjectId;
 }
 
-const ProductSchema: Schema = new Schema({
-  name: { type: String, required: true },
-  description: { type: String, required: true },
-  price: { type: Number, required: true },
-  catalog: { type: Schema.Types.ObjectId, ref: 'Catalog', required: true },
-  stock: [
-    {
-      color: { type: String, required: true },
-      qty: { type: Number, required: true }
-    }]
-}, { timestamps: true });
+const ProductSchema: Schema = new Schema(
+  {
+    name: { type: String, required: true },
+    description: { type: String, required: true },
+    price: { type: Number, required: true },
+    catalog: { type: Schema.Types.ObjectId, ref: "Catalog", required: true },
+    stock: [
+      {
+        color: { type: String, required: true },
+        qty: { type: Number, required: true },
+      },
+    ],
+  },
+  { timestamps: true }
+);
 
-export const Product = mongoose.model<IProduct>('Product', ProductSchema);
+export const Product = mongoose.model<IProduct>("Product", ProductSchema);
 
 // Catalog Schema
 interface ICatalog extends Document {
-    _id: mongoose.Types.ObjectId;
+  _id: mongoose.Types.ObjectId;
   seller: mongoose.Types.ObjectId;
   products: mongoose.Types.ObjectId[];
 }
 
-const CatalogSchema: Schema = new Schema({
-  seller: { type: Schema.Types.ObjectId, ref: 'Seller', required: true },
-  products: [{ type: Schema.Types.ObjectId, ref: 'Product' }]
-}, { timestamps: true });
+const CatalogSchema: Schema = new Schema(
+  {
+    seller: { type: Schema.Types.ObjectId, ref: "Seller", required: true },
+    products: [{ type: Schema.Types.ObjectId, ref: "Product" }],
+  },
+  { timestamps: true }
+);
 
-export const Catalog = mongoose.model<ICatalog>('Catalog', CatalogSchema);
+export const Catalog = mongoose.model<ICatalog>("Catalog", CatalogSchema);
 
 // Order Schema
 interface IOrder extends Document {
-    _id: mongoose.Types.ObjectId;
+  _id: mongoose.Types.ObjectId;
   buyer: mongoose.Types.ObjectId;
   seller: mongoose.Types.ObjectId;
   items: {
@@ -146,59 +172,115 @@ interface IOrder extends Document {
   }[];
   totalPrice: number;
   deliveryAddress: mongoose.Types.ObjectId;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
 }
 
-const OrderSchema: Schema = new Schema({
-  buyer: { type: Schema.Types.ObjectId, ref: 'Buyer', required: true },
-  seller: { type: Schema.Types.ObjectId, ref: 'Seller', required: true },
-  items: [{
-    product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
-    quantity: { type: Number, required: true },
-    price: { type: Number, required: true }
-  }],
-  totalPrice: { type: Number, required: true },
-  deliveryAddress: { type: Schema.Types.ObjectId, ref: 'DeliveryAddress', required: true },
-  status: { type: String, enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'], default: 'pending' }
-}, { timestamps: true });
+const OrderSchema: Schema = new Schema(
+  {
+    buyer: { type: Schema.Types.ObjectId, ref: "Buyer", required: true },
+    seller: { type: Schema.Types.ObjectId, ref: "Seller", required: true },
+    items: [
+      {
+        product: {
+          type: Schema.Types.ObjectId,
+          ref: "Product",
+          required: true,
+        },
+        quantity: { type: Number, required: true },
+        price: { type: Number, required: true },
+      },
+    ],
+    totalPrice: { type: Number, required: true },
+    deliveryAddress: {
+      type: Schema.Types.ObjectId,
+      ref: "DeliveryAddress",
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
+      default: "pending",
+    },
+  },
+  { timestamps: true }
+);
 
-export const Order = mongoose.model<IOrder>('Order', OrderSchema);
+export const Order = mongoose.model<IOrder>("Order", OrderSchema);
 
 // Payment Schema
 interface IPayment extends Document {
-    _id: mongoose.Types.ObjectId;
+  _id: mongoose.Types.ObjectId;
   order: mongoose.Types.ObjectId;
   amount: number;
-  status: 'pending' | 'completed' | 'failed';
+  status: "pending" | "completed" | "failed";
   paymentMethod: string;
 }
 
-const PaymentSchema: Schema = new Schema({
-  order: { type: Schema.Types.ObjectId, ref: 'Order', required: true },
-  amount: { type: Number, required: true },
-  status: { type: String, enum: ['pending', 'completed', 'failed'], default: 'pending' },
-  paymentMethod: { type: String, required: true }
-}, { timestamps: true });
+const PaymentSchema: Schema = new Schema(
+  {
+    order: { type: Schema.Types.ObjectId, ref: "Order", required: true },
+    amount: { type: Number, required: true },
+    status: {
+      type: String,
+      enum: ["pending", "completed", "failed"],
+      default: "pending",
+    },
+    paymentMethod: { type: String, required: true },
+  },
+  { timestamps: true }
+);
 
-export const Payment = mongoose.model<IPayment>('Payment', PaymentSchema);
-
+export const Payment = mongoose.model<IPayment>("Payment", PaymentSchema);
 
 export interface IMessage extends Document {
-  sender: Schema.Types.ObjectId;
-  receiver: Schema.Types.ObjectId;
-  message: string;
-  timestamp: Date;
-  senderModel: 'Seller' | 'Buyer';
-  receiverModel: 'Seller' | 'Buyer';
+  whatsappMessageId: string;
+  from: string;
+  timestamp: string;
+  text: string;
+  platform: string;
 }
 
-const MessageSchema: Schema = new Schema({
-  sender: { type: Schema.Types.ObjectId, required: true, refPath: 'senderModel' },
-  receiver: { type: Schema.Types.ObjectId, required: true, refPath: 'receiverModel' },
-  message: { type: String, required: true },
-  timestamp: { type: Date, default: Date.now },
-  senderModel: { type: String, required: true, enum: ['Seller', 'Buyer'] },
-  receiverModel: { type: String, required: true, enum: ['Seller', 'Buyer'] },
-}, { timestamps: true });
+const MessageSchema: Schema = new Schema(
+  {
+    sender: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      refPath: "senderModel",
+    },
+    receiver: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      refPath: "receiverModel",
+    },
+    message: { type: String, required: true },
+    timestamp: { type: Date, default: Date.now },
+    senderModel: { type: String, required: true, enum: ["Seller", "Buyer"] },
+    receiverModel: { type: String, required: true, enum: ["Seller", "Buyer"] },
+  },
+  { timestamps: true }
+);
 
-export const Message = mongoose.model<IMessage>('Message', MessageSchema);
+export const Message = mongoose.model<IMessage>("Message", MessageSchema);
+
+
+
+
+
+
+
+
+
+
+
+// const accountSid = 'ACc3e63d94a8e499de4c2dd63c3939b97b';
+// const authToken = '[AuthToken]';
+// const client = require('twilio')(accountSid, authToken);
+
+// client.messages
+//     .create({
+//         body: 'Your appointment is coming up on July 21 at 3PM',
+//         from: 'whatsapp:+14155238886',
+//         to: 'whatsapp:+233209456823'
+//     })
+//     .then(message => console.log(message.sid))
+//     .done();

@@ -10,7 +10,9 @@ import * as admin from "firebase-admin";
 import sellerRoutes, { CustomRequest } from "./Routes/seller";
 import productRoutes from "./Routes/products";
 import buyerRoutes from "./Routes/buyer";
+import ordersRoute from "./Routes/orders";
 import { authenticateToken } from "./Utils/auth";
+
 
 // Load environment variables
 dotenv.config();
@@ -41,6 +43,7 @@ const MONGODB_URI = `mongodb+srv://${process.env.MONGO_DB_USER}:${process.env.MO
 app.use("/api", sellerRoutes);
 app.use("/api", productRoutes);
 app.use("/api", buyerRoutes);
+app.use("/api",  ordersRoute)
 
 // Chat routes using Firebase
 app.post("/chat", authenticateToken, async (req: CustomRequest, res) => {
@@ -78,6 +81,9 @@ app.post("/chat", authenticateToken, async (req: CustomRequest, res) => {
 app.get("/", (req, res) => {
   res.status(200).send("Render is working!")
 })
+
+
+
 
 app.get("/chat/", async (req: CustomRequest, res) => {
   const user = req.user;

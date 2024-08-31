@@ -65,7 +65,7 @@ router.post('/product', authenticateToken, async (req: CustomRequest, res: Respo
   router.put('/product/:id', authenticateToken, async (req: CustomRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { name, description, price } = req.body;
+      const { name, price } = req.body;
       const sellerId = req.user?.id;
   
       const seller = await Seller.findById(sellerId);
@@ -75,7 +75,7 @@ router.post('/product', authenticateToken, async (req: CustomRequest, res: Respo
   
       const product = await Product.findOneAndUpdate(
         { _id: id, catalog: seller.catalog },
-        { name, description, price },
+        { name, price },
         { new: true }
       );
   

@@ -72,7 +72,7 @@ const ProductsCatalog = () => {
           <View style={styles.emptyState}>
             <Ionicons name="basket-outline" size={64} color="#6200EE" />
             <Text style={styles.emptyStateText}>No products found</Text>
-            <TouchableOpacity style={styles.addProductButton} onPress={() => {}}>
+            <TouchableOpacity style={styles.addProductButton} onPress={() => navigation.navigate("Add Product")}>
               <Text style={styles.addProductButtonText}>Add a Product</Text>
             </TouchableOpacity>
           </View>

@@ -5,6 +5,7 @@ import { removeFromCart, updateCartItemQuantity, clearCart } from './actionSlice
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { baseUrl } from '@/baseUrl';
+import { useNavigation } from '@react-navigation/native';
 
 interface CartItemProps {
   id: string;
@@ -80,6 +81,7 @@ const CartFragment: React.FC = () => {
     fullName: userInfo.fullName || '',
     phoneNumber: userInfo.phoneNumber || '',
   });
+  const navigation = useNavigation()
 
   const totalPrice = cartItems.reduce((sum: number, item: CartItemProps) => sum + item.price * item.quantity, 0);
 
@@ -93,25 +95,45 @@ const CartFragment: React.FC = () => {
 
   const proceedToPayment = async () => {
     try {
-      const response = await axios.post(`${baseUrl}/api/checkout`, {
-        cartItems,
-        userDetails,
-        totalPrice,
-      }, {
-        headers: {
-          Authorization: `Bearer ${userInfo.userAuth}`,
+      const response = await axios.post(
+        `${baseUrl}/api/checkout`,
+        {
+          cartItems: cartItems.map((item:any) => ({
+            product: item.product._id,
+            quantity: item.quantity
+          })),
+          userDetails: {
+            deliveryAddress: userDetails.deliveryAddress,
+            phoneNumber: userDetails.phoneNumber // Make sure to collect this from the user
+          },
+          totalPrice
         },
-      });
-
+        {
+          headers: {
+            Authorization: `Bearer ${userInfo.userAuth}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+  
       if (response.data.success) {
-        Alert.alert('Success', 'Your order has been placed successfully!');
+        Alert.alert('Payment Initiated', 'Please check your phone for the M-Pesa payment prompt.');
         dispatch(clearCart());
+        // Navigate to a payment confirmation screen
+        navigation.navigate('PaymentConfirmation', { 
+          orderId: response.data.orderId,
+          checkoutRequestID: response.data.checkoutRequestID
+        });
       } else {
         throw new Error(response.data.message || 'Checkout failed');
       }
     } catch (error) {
       console.error('Checkout error:', error);
-      Alert.alert('Error', 'Failed to process your order. Please try again.');
+      if (axios.isAxiosError(error) && error.response) {
+        Alert.alert('Error', error.response.data.message || 'Failed to process your order. Please try again.');
+      } else {
+        Alert.alert('Error', 'An unexpected error occurred. Please try again later.');
+      }
     }
   };
 

@@ -6,6 +6,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import axios from 'axios';
 import { setLoading, setOrders } from '@/app/screens/userSlice';
 import { baseUrl } from '@/baseUrl';
+import FeedbackButton from './feedback';
 
 const SellerDashboard = () => {
   const navigation = useNavigation();
@@ -90,6 +91,7 @@ const SellerDashboard = () => {
           </View>
         )}
       </View>
+      <FeedbackButton recipientEmail="mawuenababoh12@gmail.com" />
     </View>
   );
 };
