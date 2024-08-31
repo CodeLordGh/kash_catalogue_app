@@ -121,7 +121,7 @@ export interface IProduct extends Document {
   name: string;
   description: string;
   price: number;
-  stock: [{ color: string; qty: number; }];
+  stock: [{ color: string; qty: number; size: string}];
   catalog: mongoose.Types.ObjectId;
 }
 
@@ -135,6 +135,7 @@ const ProductSchema: Schema = new Schema(
       {
         color: { type: String, required: true },
         qty: { type: Number, required: true },
+        size: { type: String, required: false },
       },
     ],
   },
@@ -191,11 +192,11 @@ const OrderSchema: Schema = new Schema(
       },
     ],
     totalPrice: { type: Number, required: true },
-    deliveryAddress: {
+    deliveryAddress: {type: String}/** {
       type: Schema.Types.ObjectId,
       ref: "DeliveryAddress",
       required: true,
-    },
+    }*/ ,
     status: {
       type: String,
       enum: ["pending", "processing", "shipped", "delivered", "cancelled"],

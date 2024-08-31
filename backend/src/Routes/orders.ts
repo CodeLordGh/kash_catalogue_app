@@ -1,8 +1,7 @@
 import express, { Request, Response } from "express";
-
 import { authenticateToken } from "../Utils/auth";
 import { CustomRequest } from "./seller";
-import { Order, Product } from "../Models/models";
+import { Catalog, Order, Product } from "../Models/models";
 import { initiateMpesaPayment } from "../Services/payment";
 import { validateObjectId } from "../Utils/validation";
 
@@ -23,11 +22,7 @@ router.post(
           .json({ success: false, message: "Invalid cart items" });
       }
 
-      if (
-        !userDetails ||
-        // !userDetails.deliveryAddress ||
-        !userDetails.phoneNumber
-      ) {
+      if (!userDetails || !userDetails.phoneNumber) {
         return res
           .status(400)
           .json({ success: false, message: "Invalid user details" });
@@ -42,7 +37,7 @@ router.post(
       // Validate and process cart items
       const orderItems = [];
       let calculatedTotal = 0;
-      let seller;
+      let catalog;
 
       for (const item of cartItems) {
         if (!validateObjectId(item.product)) {
@@ -51,7 +46,8 @@ router.post(
             .json({ success: false, message: "Invalid product ID" });
         }
 
-        const product = await Product.findById(item.product).populate("seller");
+        const product = await Product.findById(item.product).populate("catalog");
+        console.log(product?._id)
         if (!product) {
           return res.status(404).json({
             success: false,
@@ -59,35 +55,36 @@ router.post(
           });
         }
 
-        if (product.stock < item.quantity) {
+        // Check stock for specific color and size
+        const stockItem = product.stock.find(
+          (stockItem) => stockItem.color === item.color// && stockItem.size === item.size
+        );
+
+        if (!stockItem || stockItem.qty < item.quantity) {
           return res.status(400).json({
             success: false,
-            message: `Insufficient stock for product: ${product.name}`,
+            message: `Insufficient stock for product: ${product.name}, Color: ${item.color}, Size: ${item.size}`,
           });
         }
 
         orderItems.push({
           product: product._id,
+          name: product.name,
           quantity: item.quantity,
           price: product.price,
+          color: item.color,
+          size: item.size,
         });
 
         calculatedTotal += product.price * item.quantity;
 
         // Update product stock
-        const stockItem = product.stock.find(
-          (itm) => itm.color === item.color
-        );
-        if (stockItem) {
-          stockItem.qty -= item.quantity;
-        } else {
-          // Handle the case where the stock item is not found
-          console.error(`Stock item not found for product ${product._id}`);
-        }
+        stockItem.qty -= item.quantity;
+        await product.save();
 
         // Set the seller (assuming all products are from the same seller)
-        if (!seller) {
-          seller = (product as any).seller;
+        if (!catalog) {
+          catalog = (product as any).catalog;
         }
       }
 
@@ -101,10 +98,11 @@ router.post(
       // Create order
       const order = new Order({
         buyer,
-        seller: seller._id,
+        seller: catalog._id,
         items: orderItems,
         totalPrice: calculatedTotal,
-        deliveryAddress: userDetails.deliveryAddress,
+        deliveryAddress: userDetails.deliveryAddress || "",
+        phoneNumber: userDetails.phoneNumber,
       });
 
       await order.save();

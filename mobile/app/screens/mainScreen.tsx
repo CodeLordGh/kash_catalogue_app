@@ -43,6 +43,7 @@ const MainScreen = () => {
             )
           }} />
         </Tab.Navigator>
+        
       </SafeAreaView>
   );
 };

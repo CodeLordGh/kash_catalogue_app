@@ -6,6 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { baseUrl } from '@/baseUrl';
 import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../types';
 
 interface CartItemProps {
   id: string;
@@ -21,6 +23,9 @@ interface UserInfo {
   fullName: string;
   phoneNumber: string;
 }
+
+type CartFragmentNavigationProp = StackNavigationProp<RootStackParamList, 'PaymentConfirmation'>;
+
 
 const CartItem: React.FC<CartItemProps> = ({ id, name, color, size, quantity, price }) => {
   const dispatch = useDispatch();
@@ -72,6 +77,7 @@ const CartItem: React.FC<CartItemProps> = ({ id, name, color, size, quantity, pr
   );
 };
 
+
 const CartFragment: React.FC = () => {
   const cartItems = useSelector((state: any) => state.action.cart);
   const userInfo = useSelector((state: any) => state.user.userInfo);
@@ -81,7 +87,7 @@ const CartFragment: React.FC = () => {
     fullName: userInfo.fullName || '',
     phoneNumber: userInfo.phoneNumber || '',
   });
-  const navigation = useNavigation()
+  const navigation = useNavigation<CartFragmentNavigationProp>();
 
   const totalPrice = cartItems.reduce((sum: number, item: CartItemProps) => sum + item.price * item.quantity, 0);
 
@@ -99,12 +105,14 @@ const CartFragment: React.FC = () => {
         `${baseUrl}/api/checkout`,
         {
           cartItems: cartItems.map((item:any) => ({
-            product: item.product._id,
-            quantity: item.quantity
+            product: item.id,
+            quantity: item.quantity,
+            color: item.color,
+            size: item.size
           })),
           userDetails: {
             deliveryAddress: userDetails.deliveryAddress,
-            phoneNumber: userDetails.phoneNumber // Make sure to collect this from the user
+            phoneNumber: userDetails.phoneNumber
           },
           totalPrice
         },
@@ -119,7 +127,7 @@ const CartFragment: React.FC = () => {
       if (response.data.success) {
         Alert.alert('Payment Initiated', 'Please check your phone for the M-Pesa payment prompt.');
         dispatch(clearCart());
-        // Navigate to a payment confirmation screen
+        // Navigate to the payment confirmation screen
         navigation.navigate('PaymentConfirmation', { 
           orderId: response.data.orderId,
           checkoutRequestID: response.data.checkoutRequestID

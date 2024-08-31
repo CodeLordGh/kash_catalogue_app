@@ -10,11 +10,11 @@ interface CartItem {
   }
 
 const initialState = {
-  selectedColor: 'black',
-  selectedSize: '40',
+  selectedColor: '',
+  selectedSize: '',
   quantity: 1,
   cart: [{
-    id: 0,
+    id: "",
     quantity: 0,
   name: '',
   color: '',
@@ -27,7 +27,7 @@ const initialState = {
     updatedAt: '',
     name: '',
     price: 0,
-    sizes: ['32', '40', '42', '44'],
+    sizes: [],
     stock: [{
       color: '',
       qty: 0

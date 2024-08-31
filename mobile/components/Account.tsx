@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import { baseUrl } from '@/baseUrl';
 import * as Clipboard from 'expo-clipboard';
+import { clearCart } from '@/app/screens/actionSlice';
 
 const Account = () => {
   const dispatch = useDispatch();
@@ -61,6 +62,8 @@ const Account = () => {
           headers: { Authorization: `Bearer ${userInfo.userAuth}` },
         });
       }
+
+      dispatch(clearCart())
       dispatch(logoutUser());
       navigation.navigate("Login");
     } catch (error) {

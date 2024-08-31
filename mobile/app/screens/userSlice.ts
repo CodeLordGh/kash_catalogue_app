@@ -1,5 +1,5 @@
 // slices/userSlice.ts
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface UserInfo {
   User: string;
@@ -7,15 +7,16 @@ interface UserInfo {
   fullName?: string;
   email?: string;
   phoneNumber?: string;
-  userAuth: string
+  userAuth: string;
+  deliveryAddress: Array<string>;
 }
 
 interface Product {
   name: string;
   description: string;
-  price: number,
+  price: number;
   _id: string;
-  stock: Array<{color: string; qty: number}>
+  stock: Array<{ color: string; qty: number }>;
 }
 
 interface UserState {
@@ -28,8 +29,8 @@ interface UserState {
     storeId: string;
   };
   loading: boolean;
-  products: Product[],
-  orders: []
+  products: Product[];
+  orders: [];
 }
 
 const initialState: UserState = {
@@ -37,65 +38,88 @@ const initialState: UserState = {
   cartProducts: [],
   catalogProducts: [],
   userInfo: {
-    userId: 'j',
-    User: '',
-    userAuth: '',
+    userId: "j",
+    User: "",
+    userAuth: "",
+    deliveryAddress: [],
   },
   shop: {
-    businessName: '',
-    storeId: '',
+    businessName: "",
+    storeId: "",
   },
   loading: false,
   products: [],
-  orders: []
+  orders: [],
 };
 
 const userSlice = createSlice({
-  name: 'user',
+  name: "user",
   initialState,
   reducers: {
     setChatId: (state, action: PayloadAction<string>) => {
       state.chatId = action.payload;
     },
-    setCartProducts: (state, action: PayloadAction<Array<{ productId: string; quantity: number; color?: string }>>) => {
+    setCartProducts: (
+      state,
+      action: PayloadAction<
+        Array<{ productId: string; quantity: number; color?: string }>
+      >
+    ) => {
       state.cartProducts = action.payload;
     },
-    setCatalogProducts: (state, action: PayloadAction<Array<{ _id: string; name: string; price: number }>>) => {
+    setCatalogProducts: (
+      state,
+      action: PayloadAction<Array<{ _id: string; name: string; price: number }>>
+    ) => {
       state.catalogProducts = action.payload;
     },
     setUserInfo: (state, action: PayloadAction<UserInfo>) => {
       state.userInfo = action.payload;
     },
-    setShop: (state, action: PayloadAction<{ businessName: string; storeId: string }>) => {
+    setShop: (
+      state,
+      action: PayloadAction<{ businessName: string; storeId: string }>
+    ) => {
       state.shop = action.payload;
     },
     setLoading: (state, action: PayloadAction<boolean>) => {
-      state.loading = action.payload
+      state.loading = action.payload;
     },
-    setProducts: (state, action:PayloadAction<Product[]>) =>{
-      state.products = action.payload
+    setProducts: (state, action: PayloadAction<Product[]>) => {
+      state.products = action.payload;
     },
-    setOrders: (state, action:PayloadAction<any>) =>{
-      state.products = action.payload
+    setOrders: (state, action: PayloadAction<any>) => {
+      state.products = action.payload;
     },
     logoutUser: (state) => {
       state.chatId = [];
       state.cartProducts = [];
       state.catalogProducts = [];
       state.userInfo = {
-        userId: '',
-        User: '',
-        userAuth: '',
-        };
-        state.shop = {
-          businessName: '',
-          storeId: '',
-          };
-          state.loading = false;
-          state.products = [];
-    }
+        userId: "",
+        User: "",
+        userAuth: "",
+        deliveryAddress: [],
+      };
+      state.shop = {
+        businessName: "",
+        storeId: "",
+      };
+      state.loading = false;
+      state.products = [];
+    },
   },
 });
 
-export const { setChatId, setCartProducts, setCatalogProducts, setUserInfo, setShop, setLoading, setProducts, logoutUser, setOrders } = userSlice.actions;
+export const {
+  setChatId,
+  setCartProducts,
+  setCatalogProducts,
+  setUserInfo,
+  setShop,
+  setLoading,
+  setProducts,
+  logoutUser,
+  setOrders,
+} = userSlice.actions;
 export default userSlice.reducer;

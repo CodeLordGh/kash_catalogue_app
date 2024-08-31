@@ -6,6 +6,7 @@ export type RootStackParamList = {
     SellerMainScreen: undefined;
     Chat: undefined;
     ProductPage: undefined,
+    PaymentConfirmation: { orderId: string; checkoutRequestID: string };
   };
 
   export type ChatParamList = {
