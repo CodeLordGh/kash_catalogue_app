@@ -75,7 +75,8 @@ const LoginScreen = () => {
           userAuth: data.accessToken,
           User: 'Seller',
           email: data.user.email,
-          fullName: data.user.fullName
+          fullName: data.user.fullName,
+          deliveryAddress: data.user.deliveryAdress
         }));
         dispatch(setChatId(data.user.chatId));
         dispatch(setProducts(data.products));
@@ -96,7 +97,8 @@ const LoginScreen = () => {
           fullName: data.user.fullName,
           email: data.user.email,
           phoneNumber: data.user.phoneNumber,
-          userAuth: data.accessToken
+          userAuth: data.accessToken,
+          deliveryAddress: data.user.deliveryAdress
         }));
         dispatch(setShop({
           businessName: data.user.seller.businessName,

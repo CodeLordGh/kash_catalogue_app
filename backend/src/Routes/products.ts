@@ -1,8 +1,9 @@
 import express from 'express';
 import { Request, Response } from 'express';
 // import { authenticateToken } from './middleware/auth';
-import { Catalog, Product, Seller } from '../Models/models';
+import { Buyer, Catalog, Product, Seller } from '../Models/models';
 import { authenticateToken } from '../Utils/auth';
+import { NotificationData, sendPushNotification } from '../Utils/notification';
 
 interface CustomRequest extends Request {
     user?: {
@@ -38,6 +39,22 @@ router.post('/product', authenticateToken, async (req: CustomRequest, res: Respo
       await Catalog.findByIdAndUpdate(seller.catalog, {
         $push: { products: newProduct._id }
       });
+
+      // send notification to all customers related to this seller
+      
+      const sendPushNotificationToCustomers = async (seller: any, notificationData: NotificationData) => {
+      
+        const customerIds = seller.customers;
+        const customers = await Buyer.find({ _id: { $in: customerIds } });
+      
+        const fcmTokens = customers.map((customer) => customer.fcmToken);
+      
+        await Promise.all(fcmTokens.map((token) => sendPushNotification(token, notificationData)));
+      
+        console.log(`Push notifications sent to ${fcmTokens.length} customers`);
+      };
+      await sendPushNotificationToCustomers(seller, {title: "New Product", body: `${seller.businessName} has added a new item. Check it out`})
+      // Send response
   
       res.status(201).json({message: "Item added succesfully"});
     } catch (error) {

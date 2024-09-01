@@ -33,10 +33,11 @@ const extractedId = (req: CustomRequest, res: express.Response, next: express.Ne
 
 // login
 router.post("/login", async (req, res) => {
-  const { input } = req.body;
-  const user = await loginBuyer(input);
+  const { input, fcmToken } = req.body;
+  const user = await loginBuyer(input, fcmToken);
 
   const accessToken = generateAccessToken(user._id);
+  
 
   res.status(200).json({user, accessToken});
 })

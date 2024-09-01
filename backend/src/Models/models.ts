@@ -15,6 +15,7 @@ interface ISeller extends Document {
   customers: mongoose.Types.ObjectId[];
   deliveryAddresses: mongoose.Types.ObjectId[];
   chatId: string;
+  fcmToken: string,
 }
 
 const SellerSchema: Schema = new Schema(
@@ -33,7 +34,9 @@ const SellerSchema: Schema = new Schema(
       { type: Schema.Types.ObjectId, ref: "DeliveryAddress" },
     ],
     chatId: [{ type: String }],
+    fcmToken: {type: String},
   },
+  
   { timestamps: true }
 );
 
@@ -55,6 +58,7 @@ interface IBuyer extends Document {
   serviceProvider: string;
   associatedStores: mongoose.Types.ObjectId[];
   chatId: string;
+  fcmToken: string,
 }
 
 const BuyerSchema: Schema = new Schema(
@@ -74,6 +78,7 @@ const BuyerSchema: Schema = new Schema(
     orders: [{ type: Schema.Types.ObjectId, ref: "Order" }],
     associatedStores: [{ type: Schema.Types.ObjectId, ref: "Seller" }],
     chatId: { type: String },
+    fcmToken: {type: String},
   },
   { timestamps: true }
 );

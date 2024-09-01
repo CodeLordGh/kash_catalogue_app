@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import LoginScreen from "./login";
 import { createStackNavigator } from "@react-navigation/stack";
 import RegisterScreen from "./register";
@@ -11,15 +11,35 @@ import { store, persistor } from "./store";
 import { Provider } from "react-redux";
 import ProductDetails from "@/components/productDetail";
 import PaymentConfirmation from "./screens/paymentConfirmation";
+import messaging from '@react-native-firebase/messaging';
+import { Linking } from 'react-native';
+import { NotificationService } from "./utils/NotificationService";
 
 const Stack = createStackNavigator<RootStackParamList>();
-interface PaymentConfirmationParams {
-  orderId: string;
-}
+
+const handleNotificationOpen = (remoteMessage:any) => {
+  if (remoteMessage && remoteMessage.data && remoteMessage.data.productId) {
+    Linking.openURL(`yourapp://product/${remoteMessage.data.productId}`);
+  }
+};
 
 export default function Index() {
-  // console.log('Store:', store);
-  // console.log('Persistor:', persistor);
+  useEffect(() => {
+    const setupNotifications = async () => {
+      NotificationService.setNotificationHandler();
+      await NotificationService.registerForPushNotifications();
+      NotificationService.setBackgroundMessageHandler();
+
+      messaging().onNotificationOpenedApp(handleNotificationOpen);
+
+      messaging()
+        .getInitialNotification()
+        .then(handleNotificationOpen);
+    };
+
+    setupNotifications();
+  }, []);
+
   return (
     <Provider store={store}>
       <PersistGate persistor={persistor}>
@@ -36,10 +56,6 @@ export default function Index() {
           <Stack.Screen
             name="PaymentConfirmation"
             component={PaymentConfirmation}
-            // options={({ route }) => ({
-            //   // You can access the params here
-            //   title: ((route.params as unknown) as PaymentConfirmationParams)?.orderId ?? "",
-            // })}
           />
         </Stack.Navigator>
       </PersistGate>

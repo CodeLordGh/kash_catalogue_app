@@ -69,7 +69,7 @@ router.post('/seller/login', async (req: CustomRequest, res) => {
 
   let products
   try {
-    const { email, password } = req.body;
+    const { email, password, fcmToken } = req.body;
     const seller = await Seller.findOne({ email }).select('-refreshToken -createdAt -__v');
     if (seller) products = await Catalog.find({catalog: seller.catalog})
 
@@ -81,6 +81,7 @@ router.post('/seller/login', async (req: CustomRequest, res) => {
     const refreshToken = jwt.sign({ id: seller._id }, REFRESH_TOKEN_SECRET, { expiresIn: '30d' });
 
     seller.refreshToken = refreshToken;
+    if(fcmToken) seller.fcmToken = fcmToken
     await seller.save();
 
     seller.password = "" //undefined as any

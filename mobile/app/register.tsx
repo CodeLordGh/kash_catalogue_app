@@ -11,12 +11,11 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
-import { Link } from "expo-router";
 import axios from "axios";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "./types";
 import { useNavigation } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
+import { baseUrl } from "@/baseUrl";
 
 type RegisterScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -64,13 +63,13 @@ const RegisterScreen = () => {
     try {
       if (option === "storeId") {
         await axios.post(
-          "https://czc9hkp8-3000.uks1.devtunnels.ms/api/register",
+          `${baseUrl}/api/register`,
           { storeId }
         );
         navigation.navigate("BuyerMainScreen");
       } else {
         await axios.post(
-          "https://czc9hkp8-3000.uks1.devtunnels.ms/api/seller/register",
+          `${baseUrl}/api/seller/register`,
           {
             fullName,
             businessName,
