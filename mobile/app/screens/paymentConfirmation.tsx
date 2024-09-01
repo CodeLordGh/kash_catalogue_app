@@ -72,6 +72,9 @@ const PaymentConfirmation: React.FC = () => {
                 ))}
               </View>
             )}
+            <TouchableOpacity style={styles.retryButton} onPress={() => navigation.goBack()}>
+              <Text style={styles.retryButtonText}>Continue Shoping</Text>
+            </TouchableOpacity>
           </View>
         );
       case 'failed':

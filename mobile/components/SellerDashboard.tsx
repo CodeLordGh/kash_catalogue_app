@@ -11,9 +11,11 @@ import FeedbackButton from './feedback';
 const SellerDashboard = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const orders = [] as any //useSelector((state:any) => state.user.orders);
+  const orders = useSelector((state:any) => state.user.orders);
   const loading = useSelector((state:any) => state.user.loading);
   const token = useSelector((state:any) => state.user.userInfo.userAuth);
+
+  console.log(orders.length)
 
   useEffect(() => {
     const getOrders = async () => {
@@ -24,9 +26,11 @@ const SellerDashboard = () => {
             Authorization: `Bearer ${token}`,
           },
         });
+        console.log(res.data)
         dispatch(setOrders(res.data));
-        dispatch(setLoading(false));
-      } catch (error) {
+        dispatch(setLoading(false));  
+      } catch (error: any) { 
+        console.log(error.response.data)  
         dispatch(setLoading(false));
         Alert.alert('Error', 'Unable to retrieve order data. Please try again.');
       }
@@ -41,12 +45,15 @@ const SellerDashboard = () => {
         <Text style={styles.orderId}>Order #{item.id}</Text>
         <Text style={[styles.orderStatus, { color: getStatusColor(item.status) }]}>
           {item.status}
-        </Text>
+        </Text> 
       </View>
-      <Text style={styles.orderDate}>{new Date(item.date).toLocaleDateString()}</Text>
-      <Text style={styles.orderProducts}>{item.products.join(', ')}</Text>
+      <Text style={styles.orderDate}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+      <Text style={styles.orderProducts}>
+        {item.items.map((product: any) => product.name).join(', ')}
+
+      </Text>
       <View style={styles.orderFooter}>
-        <Text style={styles.orderTotal}>${item.total.toFixed(2)}</Text>
+        <Text style={styles.orderTotal}>${item.totalPrice.toFixed(2)}</Text>
         <Ionicons name="chevron-forward" size={24} color="#6200EE" />
       </View>
     </TouchableOpacity>
@@ -56,11 +63,11 @@ const SellerDashboard = () => {
     switch (status.toLowerCase()) {
       case 'shipped':
         return '#4CAF50';
-      case 'processing':
+      case 'processing': 
         return '#FFC107';
       case 'cancelled':
         return '#F44336';
-      default:
+      default: 
         return '#6200EE';
     }
   };

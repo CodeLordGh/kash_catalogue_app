@@ -166,14 +166,17 @@ interface IOrder extends Document {
   _id: mongoose.Types.ObjectId;
   buyer: mongoose.Types.ObjectId;
   seller: mongoose.Types.ObjectId;
-  items: {
-    product: mongoose.Types.ObjectId;
-    quantity: number;
-    price: number;
-  }[];
+  items: Array<{product: mongoose.Types.ObjectId; quantity: number ; price: number}>
   totalPrice: number;
-  deliveryAddress: mongoose.Types.ObjectId;
-  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+  deliveryAddress: string;
+  checkoutRequestID: String,
+  paymentStatus: 'pending' | 'completed' | 'failed'
+  mpesaReceiptNumber: String;
+  transactionDate: String;
+  paidAmount: Number;
+  payerPhoneNumber: String;
+  paymentFailureReason: String;
+  paymentMethod: string;
 }
 
 const OrderSchema: Schema = new Schema(
@@ -197,11 +200,17 @@ const OrderSchema: Schema = new Schema(
       ref: "DeliveryAddress",
       required: true,
     }*/ ,
-    status: {
+    checkoutRequestID: String,
+    paymentStatus: {
       type: String,
-      enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
-      default: "pending",
+      enum: ['pending', 'completed', 'failed'],
+      default: 'pending'
     },
+    mpesaReceiptNumber: {type:String},
+    transactionDate: {type:String},
+    paidAmount: {type:String},
+    payerPhoneNumber: {type:String},
+    paymentFailureReason: {type: String}
   },
   { timestamps: true }
 );
@@ -213,8 +222,7 @@ interface IPayment extends Document {
   _id: mongoose.Types.ObjectId;
   order: mongoose.Types.ObjectId;
   amount: number;
-  status: "pending" | "completed" | "failed";
-  paymentMethod: string;
+
 }
 
 const PaymentSchema: Schema = new Schema(

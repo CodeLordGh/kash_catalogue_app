@@ -119,14 +119,14 @@ router.post('/order', async (req:CustomRequest, res) => {
 });
 
 // Get order history
-router.get('/orders', async (req:CustomRequest, res) => {
-  try {
-    const orders = await getOrderHistory(req.buyerId? req.buyerId: "");
-    res.status(200).json(orders);
-  } catch (error:any) {
-    res.status(400).json({ message: error.message });
-  }
-});
+// router.get('/orders', async (req:CustomRequest, res) => {
+//   try {
+//     const orders = await getOrderHistory(req.buyerId? req.buyerId: "");
+//     res.status(200).json(orders);
+//   } catch (error:any) {
+//     res.status(400).json({ message: error.message });
+//   }
+// });
 
 // Get order details
 router.get('/orders/:orderId', async (req:CustomRequest, res) => {

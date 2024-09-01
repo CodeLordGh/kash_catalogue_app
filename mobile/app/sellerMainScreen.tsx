@@ -21,6 +21,7 @@ const SellerMainScreen = () => {
             <Ionicons name="chatbubbles" size={size} color={color} />
           ),
         }} />
+        
       <Tab.Screen name="Products" component={ProductsNavigator} options={{ tabBarStyle: { display: 'none' } , tabBarIcon: ({color, size}) => {
           return <Ionicons name="cart" size={size} color={color} />
         }}} // Hide tab bar when ProductsNavigator is active

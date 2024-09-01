@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, TouchableOpacity, Text, Modal, Animated, Alert } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Text, Modal, Animated, Alert, KeyboardAvoidingView } from 'react-native';
 import { GiftedChat, IMessage as GiftedChatIMessage, Bubble } from 'react-native-gifted-chat';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ref, onChildAdded } from 'firebase/database';
@@ -198,7 +198,7 @@ const Chat: React.FC = () => {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Chat</Text>
       </View>
-      <View style={styles.chatContainer}>
+      <KeyboardAvoidingView style={styles.chatContainer}>
         <GiftedChat
           messages={messages}
           onSend={(newMessages: IMessage[]) => handleSend(newMessages)}
@@ -209,7 +209,7 @@ const Chat: React.FC = () => {
           renderAvatar={null}
           bottomOffset={80}
         />
-      </View>
+      </KeyboardAvoidingView>
       <Modal
         visible={isProductModalVisible}
         transparent={true}
@@ -273,6 +273,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     overflow: 'hidden',
+    marginBottom:20
   },
   modalOverlay: {
     flex: 1,

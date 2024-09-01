@@ -11,6 +11,16 @@ interface UserInfo {
   deliveryAddress: Array<string>;
 }
 
+export interface Order {
+  id: string;
+  buyerName: string;
+  createdAt: string;
+  deliveryAddress: string;
+  items: Array<{ name: string; /* other item properties */ }>;
+  status: string;
+  totalPrice: number;
+}
+
 interface Product {
   name: string;
   description: string;
@@ -30,7 +40,7 @@ interface UserState {
   };
   loading: boolean;
   products: Product[];
-  orders: [];
+  orders: Order[];
 }
 
 const initialState: UserState = {
@@ -88,8 +98,8 @@ const userSlice = createSlice({
     setProducts: (state, action: PayloadAction<Product[]>) => {
       state.products = action.payload;
     },
-    setOrders: (state, action: PayloadAction<any>) => {
-      state.products = action.payload;
+    setOrders: (state, action: PayloadAction<Order[]>) => {
+      state.orders = action.payload;
     },
     logoutUser: (state) => {
       state.chatId = [];
