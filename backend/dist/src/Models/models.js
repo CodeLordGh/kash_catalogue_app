@@ -153,14 +153,3 @@ const MessageSchema = new mongoose_1.Schema({
     receiverModel: { type: String, required: true, enum: ["Seller", "Buyer"] },
 }, { timestamps: true });
 exports.Message = mongoose_1.default.model("Message", MessageSchema);
-// const accountSid = 'ACc3e63d94a8e499de4c2dd63c3939b97b';
-// const authToken = '[AuthToken]';
-// const client = require('twilio')(accountSid, authToken);
-// client.messages
-//     .create({
-//         body: 'Your appointment is coming up on July 21 at 3PM',
-//         from: 'whatsapp:+14155238886',
-//         to: 'whatsapp:+233209456823'
-//     })
-//     .then(message => console.log(message.sid))
-//     .done();
