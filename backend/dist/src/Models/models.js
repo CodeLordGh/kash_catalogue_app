@@ -34,83 +34,133 @@ const SellerSchema = new mongoose_1.Schema({
     password: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     storeId: { type: String, required: true, unique: true },
-    catalog: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Catalog' },
-    customers: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'Buyer' }],
-    deliveryAddresses: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'DeliveryAddress' }],
-    chatId: [{ type: String }]
+    catalog: { type: mongoose_1.Schema.Types.ObjectId, ref: "Catalog" },
+    customers: [{ type: mongoose_1.Schema.Types.ObjectId, ref: "Buyer" }],
+    deliveryAddresses: [
+        { type: mongoose_1.Schema.Types.ObjectId, ref: "DeliveryAddress" },
+    ],
+    chatId: [{ type: String }],
+    fcmToken: { type: String },
 }, { timestamps: true });
-exports.Seller = mongoose_1.default.model('Seller', SellerSchema);
+exports.Seller = mongoose_1.default.model("Seller", SellerSchema);
 const BuyerSchema = new mongoose_1.Schema({
     fullName: { type: String },
     buyerId: { type: String, unique: true },
     serviceProvider: { type: String },
-    cart: [{
-            product: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Product' },
+    cart: [
+        {
+            product: { type: mongoose_1.Schema.Types.ObjectId, ref: "Product" },
             quantity: {
                 color: { type: String },
-                qty: { type: Number }
-            }
-        }],
+                qty: { type: Number },
+            },
+        },
+    ],
     orders: [{ type: mongoose_1.Schema.Types.ObjectId, ref: "Order" }],
-    associatedStores: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'Seller' }],
-    chatId: { type: String }
+    associatedStores: [{ type: mongoose_1.Schema.Types.ObjectId, ref: "Seller" }],
+    chatId: { type: String },
+    fcmToken: { type: String },
 }, { timestamps: true });
 BuyerSchema.index({ phoneNumber: 1, buyerId: 1 }, { unique: true, sparse: true });
-exports.Buyer = mongoose_1.default.model('Buyer', BuyerSchema);
+exports.Buyer = mongoose_1.default.model("Buyer", BuyerSchema);
 const DeliveryAddressSchema = new mongoose_1.Schema({
-    seller: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Seller', required: true },
+    seller: { type: mongoose_1.Schema.Types.ObjectId, ref: "Seller", required: true },
     name: { type: String, required: true },
     street: { type: String, required: true },
     city: { type: String, required: true },
     state: { type: String, required: true },
     country: { type: String, required: true },
-    postalCode: { type: String, required: true }
+    postalCode: { type: String, required: true },
 }, { timestamps: true });
-exports.DeliveryAddress = mongoose_1.default.model('DeliveryAddress', DeliveryAddressSchema);
+exports.DeliveryAddress = mongoose_1.default.model("DeliveryAddress", DeliveryAddressSchema);
 const ProductSchema = new mongoose_1.Schema({
     name: { type: String, required: true },
     description: { type: String, required: true },
     price: { type: Number, required: true },
-    catalog: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Catalog', required: true },
+    catalog: { type: mongoose_1.Schema.Types.ObjectId, ref: "Catalog", required: true },
     stock: [
         {
             color: { type: String, required: true },
-            qty: { type: Number, required: true }
-        }
-    ]
+            qty: { type: Number, required: true },
+            size: { type: String, required: false },
+        },
+    ],
 }, { timestamps: true });
-exports.Product = mongoose_1.default.model('Product', ProductSchema);
+exports.Product = mongoose_1.default.model("Product", ProductSchema);
 const CatalogSchema = new mongoose_1.Schema({
-    seller: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Seller', required: true },
-    products: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'Product' }]
+    seller: { type: mongoose_1.Schema.Types.ObjectId, ref: "Seller", required: true },
+    products: [{ type: mongoose_1.Schema.Types.ObjectId, ref: "Product" }],
 }, { timestamps: true });
-exports.Catalog = mongoose_1.default.model('Catalog', CatalogSchema);
+exports.Catalog = mongoose_1.default.model("Catalog", CatalogSchema);
 const OrderSchema = new mongoose_1.Schema({
-    buyer: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Buyer', required: true },
-    seller: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Seller', required: true },
-    items: [{
-            product: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Product', required: true },
+    buyer: { type: mongoose_1.Schema.Types.ObjectId, ref: "Buyer", required: true },
+    seller: { type: mongoose_1.Schema.Types.ObjectId, ref: "Seller", required: true },
+    items: [
+        {
+            product: {
+                type: mongoose_1.Schema.Types.ObjectId,
+                ref: "Product",
+                required: true,
+            },
             quantity: { type: Number, required: true },
-            price: { type: Number, required: true }
-        }],
+            price: { type: Number, required: true },
+        },
+    ],
     totalPrice: { type: Number, required: true },
-    deliveryAddress: { type: mongoose_1.Schema.Types.ObjectId, ref: 'DeliveryAddress', required: true },
-    status: { type: String, enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'], default: 'pending' }
+    deliveryAddress: { type: String } /** {
+      type: Schema.Types.ObjectId,
+      ref: "DeliveryAddress",
+      required: true,
+    }*/,
+    checkoutRequestID: String,
+    paymentStatus: {
+        type: String,
+        enum: ['pending', 'completed', 'failed'],
+        default: 'pending'
+    },
+    mpesaReceiptNumber: { type: String },
+    transactionDate: { type: String },
+    paidAmount: { type: String },
+    payerPhoneNumber: { type: String },
+    paymentFailureReason: { type: String }
 }, { timestamps: true });
-exports.Order = mongoose_1.default.model('Order', OrderSchema);
+exports.Order = mongoose_1.default.model("Order", OrderSchema);
 const PaymentSchema = new mongoose_1.Schema({
-    order: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Order', required: true },
+    order: { type: mongoose_1.Schema.Types.ObjectId, ref: "Order", required: true },
     amount: { type: Number, required: true },
-    status: { type: String, enum: ['pending', 'completed', 'failed'], default: 'pending' },
-    paymentMethod: { type: String, required: true }
+    status: {
+        type: String,
+        enum: ["pending", "completed", "failed"],
+        default: "pending",
+    },
+    paymentMethod: { type: String, required: true },
 }, { timestamps: true });
-exports.Payment = mongoose_1.default.model('Payment', PaymentSchema);
+exports.Payment = mongoose_1.default.model("Payment", PaymentSchema);
 const MessageSchema = new mongoose_1.Schema({
-    sender: { type: mongoose_1.Schema.Types.ObjectId, required: true, refPath: 'senderModel' },
-    receiver: { type: mongoose_1.Schema.Types.ObjectId, required: true, refPath: 'receiverModel' },
+    sender: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        required: true,
+        refPath: "senderModel",
+    },
+    receiver: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        required: true,
+        refPath: "receiverModel",
+    },
     message: { type: String, required: true },
     timestamp: { type: Date, default: Date.now },
-    senderModel: { type: String, required: true, enum: ['Seller', 'Buyer'] },
-    receiverModel: { type: String, required: true, enum: ['Seller', 'Buyer'] },
+    senderModel: { type: String, required: true, enum: ["Seller", "Buyer"] },
+    receiverModel: { type: String, required: true, enum: ["Seller", "Buyer"] },
 }, { timestamps: true });
-exports.Message = mongoose_1.default.model('Message', MessageSchema);
+exports.Message = mongoose_1.default.model("Message", MessageSchema);
+// const accountSid = 'ACc3e63d94a8e499de4c2dd63c3939b97b';
+// const authToken = '[AuthToken]';
+// const client = require('twilio')(accountSid, authToken);
+// client.messages
+//     .create({
+//         body: 'Your appointment is coming up on July 21 at 3PM',
+//         from: 'whatsapp:+14155238886',
+//         to: 'whatsapp:+233209456823'
+//     })
+//     .then(message => console.log(message.sid))
+//     .done();

@@ -83,33 +83,42 @@ const registerBuyer = (storeId) => __awaiter(void 0, void 0, void 0, function* (
     return { buyerId };
 });
 exports.registerBuyer = registerBuyer;
-const loginBuyer = (input) => __awaiter(void 0, void 0, void 0, function* () {
+const loginBuyer = (input, fcmToken) => __awaiter(void 0, void 0, void 0, function* () {
     // console.log("frontend data input is ",input)
-    const user = yield models_1.Buyer.findOne({ buyerId: input }).populate({
-        path: 'cart.product',
-        select: '-__v'
-    }).populate({
-        path: 'orders',
-        select: '-__v',
-        populate: {
-            path: 'items.product',
+    try {
+        const user = yield models_1.Buyer.findOne({ buyerId: input }).populate({
+            path: 'cart.product',
             select: '-__v'
+        }).populate({
+            path: 'orders',
+            select: '-__v',
+            populate: {
+                path: 'items.product',
+                select: '-__v'
+            }
+        }).populate({
+            path: 'associatedStores',
+            select: 'businessName storeId catalog'
+        });
+        if (!user) {
+            throw new Error("User not found");
         }
-    }).populate({
-        path: 'associatedStores',
-        select: 'businessName storeId catalog'
-    });
-    if (!user) {
-        throw new Error("User not found");
+        // Assuming associatedStores is an array of ObjectId, we need to access the first one
+        const associatedStore = user.associatedStores[0]; // Type assertion
+        const seller = yield models_1.Seller.findById(associatedStore).select('-password -email -chatId -_id -phoneNumber -refreshToken -tokenBlacklist -fullName -customers -createdAt -updatedAt -__v');
+        const catalog = yield models_1.Catalog.findById(seller === null || seller === void 0 ? void 0 : seller.catalog).select('-_id -createdAt -updatedAt -__v -seller').populate({
+            path: 'products',
+            select: '-__v'
+        });
+        if (fcmToken) {
+            user.fcmToken = fcmToken;
+            yield user.save();
+        }
+        return Object.assign(Object.assign({}, user.toObject()), { seller, type: 'User', catalog });
     }
-    // Assuming associatedStores is an array of ObjectId, we need to access the first one
-    const associatedStore = user.associatedStores[0]; // Type assertion
-    const seller = yield models_1.Seller.findById(associatedStore).select('-password -email -chatId -_id -phoneNumber -refreshToken -tokenBlacklist -fullName -customers -createdAt -updatedAt -__v');
-    const catalog = yield models_1.Catalog.findById(seller === null || seller === void 0 ? void 0 : seller.catalog).select('-_id -createdAt -updatedAt -__v -seller').populate({
-        path: 'products',
-        select: '-__v'
-    });
-    return Object.assign(Object.assign({}, user.toObject()), { seller, type: 'User', catalog });
+    catch (error) {
+        throw error;
+    }
 });
 exports.loginBuyer = loginBuyer;
 const updateBuyerProfile = (buyerId, fullName, phoneNumber) => __awaiter(void 0, void 0, void 0, function* () {

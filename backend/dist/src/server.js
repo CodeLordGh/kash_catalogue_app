@@ -47,6 +47,7 @@ const admin = __importStar(require("firebase-admin"));
 const seller_1 = __importDefault(require("./Routes/seller"));
 const products_1 = __importDefault(require("./Routes/products"));
 const buyer_1 = __importDefault(require("./Routes/buyer"));
+const orders_1 = __importDefault(require("./Routes/orders"));
 const auth_1 = require("./Utils/auth");
 // Load environment variables
 dotenv_1.default.config();
@@ -72,6 +73,7 @@ const MONGODB_URI = `mongodb+srv://${process.env.MONGO_DB_USER}:${process.env.MO
 app.use("/api", seller_1.default);
 app.use("/api", products_1.default);
 app.use("/api", buyer_1.default);
+app.use("/api", orders_1.default);
 // Chat routes using Firebase
 app.post("/chat", auth_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const user = req.user;

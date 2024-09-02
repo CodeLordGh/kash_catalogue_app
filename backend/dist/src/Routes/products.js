@@ -16,6 +16,7 @@ const express_1 = __importDefault(require("express"));
 // import { authenticateToken } from './middleware/auth';
 const models_1 = require("../Models/models");
 const auth_1 = require("../Utils/auth");
+const notification_1 = require("../Utils/notification");
 const router = express_1.default.Router();
 // Create Product
 router.post('/product', auth_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -39,6 +40,16 @@ router.post('/product', auth_1.authenticateToken, (req, res) => __awaiter(void 0
         yield models_1.Catalog.findByIdAndUpdate(seller.catalog, {
             $push: { products: newProduct._id }
         });
+        // send notification to all customers related to this seller
+        const sendPushNotificationToCustomers = (seller, notificationData) => __awaiter(void 0, void 0, void 0, function* () {
+            const customerIds = seller.customers;
+            const customers = yield models_1.Buyer.find({ _id: { $in: customerIds } });
+            const fcmTokens = customers.map((customer) => customer.fcmToken);
+            yield Promise.all(fcmTokens.map((token) => (0, notification_1.sendPushNotification)(token, notificationData)));
+            console.log(`Push notifications sent to ${fcmTokens.length} customers`);
+        });
+        yield sendPushNotificationToCustomers(seller, { title: "New Product", body: `${seller.businessName} has added a new item. Check it out` });
+        // Send response
         res.status(201).json({ message: "Item added succesfully" });
     }
     catch (error) {
@@ -66,13 +77,13 @@ router.put('/product/:id', auth_1.authenticateToken, (req, res) => __awaiter(voi
     var _a;
     try {
         const { id } = req.params;
-        const { name, description, price } = req.body;
+        const { name, price } = req.body;
         const sellerId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         const seller = yield models_1.Seller.findById(sellerId);
         if (!seller) {
             return res.status(404).json({ message: 'Seller not found' });
         }
-        const product = yield models_1.Product.findOneAndUpdate({ _id: id, catalog: seller.catalog }, { name, description, price }, { new: true });
+        const product = yield models_1.Product.findOneAndUpdate({ _id: id, catalog: seller.catalog }, { name, price }, { new: true });
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }

@@ -28,8 +28,8 @@ const extractedId = (req, res, next) => {
 };
 // login
 router.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { input } = req.body;
-    const user = yield (0, buyerService_1.loginBuyer)(input);
+    const { input, fcmToken } = req.body;
+    const user = yield (0, buyerService_1.loginBuyer)(input, fcmToken);
     const accessToken = (0, seller_1.generateAccessToken)(user._id);
     res.status(200).json({ user, accessToken });
 }));
@@ -111,15 +111,14 @@ router.post('/order', (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 }));
 // Get order history
-router.get('/orders', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const orders = yield (0, buyerService_1.getOrderHistory)(req.buyerId ? req.buyerId : "");
-        res.status(200).json(orders);
-    }
-    catch (error) {
-        res.status(400).json({ message: error.message });
-    }
-}));
+// router.get('/orders', async (req:CustomRequest, res) => {
+//   try {
+//     const orders = await getOrderHistory(req.buyerId? req.buyerId: "");
+//     res.status(200).json(orders);
+//   } catch (error:any) {
+//     res.status(400).json({ message: error.message });
+//   }
+// });
 // Get order details
 router.get('/orders/:orderId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
