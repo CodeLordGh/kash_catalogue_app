@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "647443711045",
+    "firebase_url": "https://ezuru-646e1-default-rtdb.firebaseio.com",
+    "project_id": "ezuru-646e1",
+    "storage_bucket": "ezuru-646e1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:647443711045:android:bbaf2d4146fc379155cf2c",
+        "android_client_info": {
+          "package_name": "com.kash_devs.ezuru"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCp1T-Rt6UDK9QN9qzlGaRPnRAbbF-G9OU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

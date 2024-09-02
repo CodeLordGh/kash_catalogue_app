@@ -21,7 +21,7 @@ export const registerBuyer = async (
   storeId: string
 ): Promise<{ buyerId: string } | {message: string }> => {
   const seller = await Seller.findOne({ storeId });
-  console.log(storeId)
+  // console.log(storeId)
   if (!seller) {
     const err = new Error("No store found!");
     throw err
@@ -52,7 +52,7 @@ export const registerBuyer = async (
 
     // Save chat ID in buyer and seller
     buyer.chatId = chatId;
-    seller.chatId = chatId; // Assuming you want to link the chat to the seller as well
+    seller.chatId = chatId;
 
     await buyer.save();
     await seller.save();

@@ -132,7 +132,7 @@ app.use(
 // Start the server
 const PORT = process.env.PORT || 3000;
 mongoose
-  .connect(MONGODB_URI)
+  .connect("mongodb://127.0.0.1:27017/vendex")
   .then(() => {
     console.log("Connected to MongoDB");
     app.listen(PORT, () => {
