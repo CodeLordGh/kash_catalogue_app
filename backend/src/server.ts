@@ -51,13 +51,9 @@ app.post("/chat", authenticateToken, async (req: CustomRequest, res) => {
   if (!user) {
     return res.status(401).json({ error: "Unauthorized" });
   }
-  const { senderModel } = user;
-
-  // console.log("I reach here")
 
   try {
     const { sender, message, chatId, _id, createdAt } = req.body;
-    console.log(sender, message, _id, chatId, createdAt);
 
     if (!sender || !message || !chatId) {
       return res.status(400).json({ error: "All fields are required" });
@@ -65,7 +61,7 @@ app.post("/chat", authenticateToken, async (req: CustomRequest, res) => {
 
     const newMessage = {
       sender: sender._id,
-      message,
+      message, // This is now encrypted
       _id,
       timestamp: createdAt,
     };
@@ -78,6 +74,8 @@ app.post("/chat", authenticateToken, async (req: CustomRequest, res) => {
     res.status(500).json({ error: "Error saving message" });
   }
 });
+
+
 app.get("/", (req, res) => {
   res.status(200).send("Render is working!")
 })

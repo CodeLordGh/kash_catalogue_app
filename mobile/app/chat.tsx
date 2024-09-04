@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { StyleSheet, View, TouchableOpacity, Text, Modal, Animated, Alert, KeyboardAvoidingView } from 'react-native';
 import { GiftedChat, IMessage as GiftedChatIMessage, Bubble } from 'react-native-gifted-chat';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ref, onChildAdded } from 'firebase/database';
+import { ref, onChildAdded, off } from 'firebase/database';
 import { database } from './firebase';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
@@ -22,6 +22,7 @@ interface ProductInfo {
   description: string;
 }
 
+
 const Chat: React.FC = () => {
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [isProductModalVisible, setProductModalVisible] = useState(false);
@@ -34,11 +35,12 @@ const Chat: React.FC = () => {
   const currentUser = useSelector((state: any) => state.user.userInfo);
   const isVendor = currentUser.User === 'Seller';
 
+  const chatRef = useRef(ref(database, `chats/${chatId}/messages`));
+
   useEffect(() => {
     if (!currentUser) return;
-    const chatRef = ref(database, `chats/${chatId}/messages`);
 
-    const unsubscribe = onChildAdded(chatRef, (snapshot) => {
+    const handleNewMessage = (snapshot: any) => {
       const message = snapshot.val();
       if (message) {
         setMessages((previousMsg) => {
@@ -54,13 +56,18 @@ const Chat: React.FC = () => {
           return previousMsg;
         });
       }
-    });
+    };
 
-    return () => unsubscribe();
+    onChildAdded(chatRef.current, handleNewMessage);
+
+    return () => {
+      off(chatRef.current, 'child_added', handleNewMessage);
+    };
   }, [chatId]);
 
-  const sendMessageToServer = async (message: IMessage) => {
+  const sendMessageToServer = useCallback(async (message: IMessage) => {
     try {
+      // const encryptedMessage = encryptMessage(message.text);
       await axios.post(
         `${baseUrl}/chat`,
         {
@@ -93,7 +100,7 @@ const Chat: React.FC = () => {
         )
       );
     }
-  };
+  }, [chatId, auth]);
 
   const retryMessage = useCallback(async (messageId: string) => {
     const messageToRetry = messages.find((msg) => msg._id === messageId);
@@ -107,7 +114,7 @@ const Chat: React.FC = () => {
       );
       await sendMessageToServer(messageToRetry);
     }
-  }, [messages]);
+  }, [messages, sendMessageToServer]);
 
   const handleSend = useCallback(async (newMessages: IMessage[] = []) => {
     const message = newMessages[0];
@@ -119,9 +126,9 @@ const Chat: React.FC = () => {
       return prevMessages;
     });
     await sendMessageToServer(message);
-  }, [chatId, auth]);
+  }, [sendMessageToServer]);
 
-  const renderBubble = (props: any) => {
+  const renderBubble = useCallback((props: any) => {
     const { currentMessage } = props;
     const productIdRegex = /\b\d{6}\b/;
     const match = currentMessage.text.match(productIdRegex);
@@ -157,9 +164,9 @@ const Chat: React.FC = () => {
         }}
       />
     );
-  };
+  }, [isVendor]);
 
-  const handleProductPress = async (productId: string) => {
+  const handleProductPress = useCallback(async (productId: string) => {
     try {
       const response = await axios.get(`${baseUrl}/api/products/${productId}`, {
         headers: {
@@ -177,9 +184,9 @@ const Chat: React.FC = () => {
       console.error('Error fetching product info:', error);
       Alert.alert("Error fetching product info")
     }
-  };
+  }, [auth, modalAnimation]);
 
-  const closeProductModal = () => {
+  const closeProductModal = useCallback(() => {
     Animated.timing(modalAnimation, {
       toValue: 0,
       duration: 300,
@@ -188,7 +195,7 @@ const Chat: React.FC = () => {
       setProductModalVisible(false);
       setSelectedProduct(null);
     });
-  };
+  }, [modalAnimation]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -198,16 +205,30 @@ const Chat: React.FC = () => {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Chat</Text>
       </View>
-      <KeyboardAvoidingView style={styles.chatContainer}>
+      <KeyboardAvoidingView style={styles.chatContainer} behavior="padding">
         <GiftedChat
           messages={messages}
-          onSend={(newMessages: IMessage[]) => handleSend(newMessages)}
+          onSend={handleSend}
           user={{
             _id: currentUser.userId,
           }}
           renderBubble={renderBubble}
           renderAvatar={null}
           bottomOffset={80}
+          renderMessage={(props) => {
+            const { currentMessage } = props;
+            if (currentMessage?.failed) {
+              return (
+                <View>
+                  <TouchableOpacity onPress={() => retryMessage(currentMessage._id as any)}>
+                    <Text style={styles.retryText}>Retry</Text>
+                  </TouchableOpacity>
+                  {renderBubble(props)}
+                </View>
+              );
+            }
+            return renderBubble(props);
+          }}
         />
       </KeyboardAvoidingView>
       <Modal
@@ -248,6 +269,7 @@ const Chat: React.FC = () => {
     </SafeAreaView>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -301,6 +323,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
   },
+  retryText: {
+    color: 'red',
+    fontSize: 12,
+    marginBottom: 5,
+  },
 });
 
-export default Chat;
+export default React.memo(Chat);

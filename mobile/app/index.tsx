@@ -17,28 +17,28 @@ import { NotificationService } from "./utils/NotificationService";
 
 const Stack = createStackNavigator<RootStackParamList>();
 
-const handleNotificationOpen = (remoteMessage:any) => {
-  if (remoteMessage && remoteMessage.data && remoteMessage.data.productId) {
-    Linking.openURL(`yourapp://product/${remoteMessage.data.productId}`);
-  }
-};
+// const handleNotificationOpen = (remoteMessage:any) => {
+//   if (remoteMessage && remoteMessage.data && remoteMessage.data.productId) {
+//     Linking.openURL(`yourapp://product/${remoteMessage.data.productId}`);
+//   }
+// };
 
 export default function Index() {
-  useEffect(() => {
-    const setupNotifications = async () => {
-      NotificationService.setNotificationHandler();
-      await NotificationService.registerForPushNotifications();
-      NotificationService.setBackgroundMessageHandler();
+  // useEffect(() => {
+  //   const setupNotifications = async () => {
+  //     NotificationService.setNotificationHandler();
+  //     await NotificationService.registerForPushNotifications();
+  //     NotificationService.setBackgroundMessageHandler();
 
-      messaging().onNotificationOpenedApp(handleNotificationOpen);
+  //     messaging().onNotificationOpenedApp(handleNotificationOpen);
 
-      messaging()
-        .getInitialNotification()
-        .then(handleNotificationOpen);
-    };
+  //     messaging()
+  //       .getInitialNotification()
+  //       .then(handleNotificationOpen);
+  //   };
 
-    setupNotifications();
-  }, []);
+  //   setupNotifications();
+  // }, []);
 
   return (
     <Provider store={store}>

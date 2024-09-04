@@ -116,7 +116,7 @@ export const loginBuyer = async (input: string, fcmToken: string) => {
     });
     
     if (!user) {
-      throw new Error("User not found");
+      return null
     }
     
     // Assuming associatedStores is an array of ObjectId, we need to access the first one

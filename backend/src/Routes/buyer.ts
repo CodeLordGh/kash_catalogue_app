@@ -34,7 +34,17 @@ const extractedId = (req: CustomRequest, res: express.Response, next: express.Ne
 // login
 router.post("/login", async (req, res) => {
   const { input, fcmToken } = req.body;
+
+  // Input validation: Check if input is a 6-digit string
+  if (!/^\d{6}$/.test(input)) {
+    return res.status(400).json({ error: "User Id must be a 6-digit string." });
+  }
   const user = await loginBuyer(input, fcmToken);
+
+    // Check if user is null or undefined
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
   const accessToken = generateAccessToken(user._id);
   
