@@ -32,6 +32,7 @@ const initialState = {
       color: '',
       qty: 0
     }],
+    images: []
   }
 };
 

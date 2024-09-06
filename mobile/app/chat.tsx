@@ -39,7 +39,6 @@ const Chat: React.FC = () => {
 
   useEffect(() => {
     if (!currentUser) return;
-
     const handleNewMessage = (snapshot: any) => {
       const message = snapshot.val();
       if (message) {
@@ -214,7 +213,7 @@ const Chat: React.FC = () => {
           }}
           renderBubble={renderBubble}
           renderAvatar={null}
-          bottomOffset={80}
+          bottomOffset={100}
           renderMessage={(props) => {
             const { currentMessage } = props;
             if (currentMessage?.failed) {

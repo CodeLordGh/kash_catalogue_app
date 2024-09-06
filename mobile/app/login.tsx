@@ -62,7 +62,7 @@ const LoginScreen = () => {
       }
     } catch (error: any) {
 
-      console.log(error.response?.data.error)
+      console.log(error.response)
       Alert.alert(
         'Login Failed',
         error.response?.data?.error || 'An unexpected error occurred. Please try again.'

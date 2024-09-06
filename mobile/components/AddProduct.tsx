@@ -19,6 +19,9 @@ import { setLoading } from '@/app/screens/userSlice';
 import { baseUrl } from '@/baseUrl';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
+import { uploadMultipleImages } from '@/app/utils/CloudinaryServices';
+
 
 const AddProduct = () => {
   const navigation = useNavigation();
@@ -31,7 +34,7 @@ const AddProduct = () => {
   const [price, setPrice] = useState('');
   const [color, setColor] = useState('');
   const [qty, setQty] = useState('');
-  const [images, setImages] = useState([]);
+  const [images, setImages] = useState(() => [] as ImagePicker.ImagePickerAsset[]);
 const [variants, setVariants] = useState<{ color: string; qty: number }[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
   const handleAddVariant = () => {
@@ -49,19 +52,47 @@ const [variants, setVariants] = useState<{ color: string; qty: number }[]>([]);
     setVariants(variants.filter((_, i) => i !== index));
   };
 
-  const handleUploadPhoto = () => {
-    // Implement image picker logic here
-    Alert.alert('Upload Photo', 'Image picker functionality to be implemented.');
+  const handleUploadPhoto = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission denied', 'Please grant camera roll permissions to select images.');
+        return;
+      }
+  
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: true,
+        quality: 1,
+      });
+  
+      if (!result.canceled) {
+        const selectedImages = result.assets.map(asset => asset.uri);
+        console.log('Selected images:', selectedImages);
+        setImages(selectedImages);
+      }
+    } catch (error) {
+      console.error('Error in handleUploadPhoto:', error);
+      Alert.alert('Error', 'Failed to select images. Please try again.');
+    }
   };
 
   const handlePublish = async () => {
-    if (!name || !description || !price || variants.length === 0) {
-      Alert.alert('Invalid Input', 'Please fill all fields and add at least one variant.');
+    if (!name || !description || !price || variants.length === 0 || images.length === 0) {
+      Alert.alert('Invalid Input', 'Please fill all fields, add at least one variant, and select at least one image.');
       return;
     }
-
+  
     try {
       dispatch(setLoading(true));
+  
+      console.log('Images to upload:', images);
+  
+      // Upload multiple images to Cloudinary
+      const imageUrls = await uploadMultipleImages(images as any);
+  
+      console.log('Uploaded image URLs:', imageUrls);
+  
       const response = await axios.post(
         `${baseUrl}/api/product`,
         {
@@ -69,7 +100,7 @@ const [variants, setVariants] = useState<{ color: string; qty: number }[]>([]);
           description,
           price: parseFloat(price),
           stock: variants,
-          // Add image upload logic here
+          images: imageUrls,
         },
         {
           headers: {
@@ -77,11 +108,13 @@ const [variants, setVariants] = useState<{ color: string; qty: number }[]>([]);
           },
         }
       );
+  
       dispatch(setLoading(false));
       Alert.alert('Success', response.data.message);
       navigation.goBack();
     } catch (error) {
       dispatch(setLoading(false));
+      console.error('Error in handlePublish:', error);
       Alert.alert('Error', 'Failed to add product. Please try again.');
     }
   };
@@ -107,7 +140,7 @@ const [variants, setVariants] = useState<{ color: string; qty: number }[]>([]);
         <View style={styles.imageContainer}>
           {images.length > 0 ? (
             images.map((image, index) => (
-              <Image key={index} source={{ uri: image }} style={styles.image} />
+              <Image key={index} source={{ uri: image.uri }} style={styles.image} />
             ))
           ) : (
             <View style={styles.imagePlaceholder}>

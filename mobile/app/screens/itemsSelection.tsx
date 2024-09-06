@@ -25,6 +25,7 @@ interface Product {
   stock: { color: string }[];
   sizes: string[];
   updatedAt: string;
+  images: Array<string>
 }
 
 const ItemSelectionFragment: React.FC = () => {
@@ -55,7 +56,7 @@ const ItemSelectionFragment: React.FC = () => {
 
     return (
       <Animated.View style={[styles.itemCard, { opacity: fadeAnim }]}>
-        <Image source={require('../../assets/images/downloa.png')} style={styles.itemImage} />
+        <Image source={product.images ? {uri: product.images[0]} :require('../../assets/images/downloa.png')} style={styles.itemImage} />
         <Text style={styles.itemTitle} numberOfLines={1}>{product.name}</Text>
         <Text style={styles.itemPrice}>${product.price.toFixed(2)}</Text>
         <TouchableOpacity

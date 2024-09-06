@@ -17,8 +17,10 @@ const router = express.Router();
 // Create Product
 router.post('/product', authenticateToken, async (req: CustomRequest, res: Response) => {
     try {
-      const { name, description, price, stock } = req.body;
+      const { name, description, price, stock, images } = req.body;
       const sellerId = req.user?.id;
+
+      console.log(images)
   
       const seller = await Seller.findById(sellerId);
       if (!seller) {
@@ -30,6 +32,7 @@ router.post('/product', authenticateToken, async (req: CustomRequest, res: Respo
         description,
         price,
         stock,
+        images,
         catalog: seller.catalog
       });
   

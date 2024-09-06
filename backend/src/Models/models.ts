@@ -128,6 +128,7 @@ export interface IProduct extends Document {
   price: number;
   stock: [{ color: string; qty: number; size: string}];
   catalog: mongoose.Types.ObjectId;
+  images: Array<string>
 }
 
 const ProductSchema: Schema = new Schema(
@@ -143,6 +144,7 @@ const ProductSchema: Schema = new Schema(
         size: { type: String, required: false },
       },
     ],
+    images: [{type: String}]
   },
   { timestamps: true }
 );
