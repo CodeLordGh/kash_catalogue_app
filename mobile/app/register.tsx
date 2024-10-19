@@ -80,6 +80,7 @@ const RegisterScreen = () => {
         navigation.navigate("SellerMainScreen");
       }
     } catch (error: any) {
+      console.log("register error line 83", error)
       Alert.alert(
         "Registration Failed",
         error.response?.data?.message ||

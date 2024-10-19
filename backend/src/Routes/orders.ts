@@ -298,43 +298,40 @@ router.get(
 
 
 router.get('/orders', authenticateToken, async (req: CustomRequest, res: Response) => {
-  
   try {
     // The authenticateToken middleware should attach the user to the request
-    const catalog = await Catalog.find({seller: req.user?.id}) ;
+    const catalog = await Catalog.findOne({seller: req.user?.id});
 
     if (!catalog) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
     
     // Fetch orders for the vendor
-    const orders = await Order.find({ seller: catalog })
-      .sort({ createdAt: -1 }) // Sort by creation date, newest first
-      .populate('buyer', 'fullName email') // Populate buyer information
-      .populate('items.product', 'name price'); // Populate product information
+    const orders = await Order.find({ seller: catalog._id })
+      .sort({ createdAt: -1 })
+      .populate('buyer', 'fullName email')
+      .populate('items.product', 'name price');
 
-      // console.log((orders as any))
-      console.log((orders as any)[0].items)
+    console.log('Found orders:', orders.length);
 
+    if (orders.length === 0) {
+      return res.json([]);
+    }
 
     // Transform the orders to include only necessary information
     const transformedOrders = orders.map(order => ({
       id: order._id,
-      buyerName: (order.buyer as any).fullName,
-      buyerEmail: (order.buyer as any).email,
+      buyerName: (order.buyer as any).fullName || 'Unknown',
+      buyerEmail: (order.buyer as any).email || 'Unknown',
       totalPrice: order.totalPrice,
       status: order.paymentStatus,
       createdAt: (order as any).createdAt,
       items: order.items.map(item => ({
-        productName: (item as any).product.name,
+        productName: (item.product as any).name || 'Unknown',
         quantity: item.quantity,
         price: item.price,
-        // color: (item as any).color,
-        // size: (item as any).size,
       })),
       deliveryAddress: order.deliveryAddress,
-      // mpesaReceiptNumber: order.mpesaReceiptNumber,
-      // transactionDate: order.transactionDate,
     }));
 
     res.json(transformedOrders);

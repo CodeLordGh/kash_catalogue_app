@@ -3,10 +3,10 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, ActivityIndi
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSelector } from 'react-redux';
-import { ref, onValue } from 'firebase/database';
-import { database } from '@/app/firebase';
+import { getDatabase, ref, get } from 'firebase/database';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ChatParamList } from '@/app/types';
+import { app } from '@/app/firebase';
 
 type GoToChat = StackNavigationProp<ChatParamList, 'Chat'>;
 
@@ -30,26 +30,47 @@ interface MessageList {
 const Messages = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const userId = useSelector((state: any) => state.user.userInfo.userId);
   const navigation = useNavigation<GoToChat>();
 
-  useEffect(() => {
-    const chatRef = ref(database, 'chats');
+  const fetchMessages = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const database = getDatabase(app);
+      const chatRef = ref(database, 'chats');
 
-    onValue(chatRef, (snapshot) => {
+      console.log('Fetching messages for user:', userId);
+
+      const snapshot = await get(chatRef);
       const data = snapshot.val();
+
       if (data) {
-        const messageList = Object.keys(data).map((key) => ({
+        console.log('Data received:', data);
+        const messageList = Object.entries(data).map(([key, value]) => ({
           _id: key,
-          ...data[key],
+          ...(value as any),
         }));
         const filteredMessages = messageList.filter(
-          (chat: any) => chat.storeId === userId
-        ) as Message[];
+          (chat) => chat.storeId === userId
+        );
+        console.log('Filtered messages:', filteredMessages);
         setMessages(filteredMessages);
+      } else {
+        console.log('No data received from Firebase');
+        setMessages([]);
       }
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      setError('Failed to fetch messages. Please try again later.');
+    } finally {
       setLoading(false);
-    });
+    }
+  };
+
+  useEffect(() => {
+    fetchMessages();
   }, [userId]);
 
   const renderMessageItem = ({ item }: { item: Message }) => {
@@ -93,6 +114,13 @@ const Messages = () => {
       <View style={styles.messagesContainer}>
         {loading ? (
           <ActivityIndicator size="large" color="#6200EE" />
+        ) : error ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={fetchMessages}>
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
         ) : messages.length > 0 ? (
           <FlatList
             data={messages}
@@ -182,6 +210,23 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#666',
     marginTop: 16,
+  },
+  errorText: {
+    fontSize: 16,
+    color: 'red',
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#6200EE',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 5,
+    marginTop: 16,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

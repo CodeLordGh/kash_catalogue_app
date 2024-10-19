@@ -216,10 +216,10 @@ const Chat: React.FC = () => {
           bottomOffset={100}
           renderMessage={(props) => {
             const { currentMessage } = props;
-            if (currentMessage?.failed) {
+            if ((currentMessage as any).failed) {
               return (
                 <View>
-                  <TouchableOpacity onPress={() => retryMessage(currentMessage._id as any)}>
+                  <TouchableOpacity onPress={() => retryMessage(currentMessage?._id as any)}>
                     <Text style={styles.retryText}>Retry</Text>
                   </TouchableOpacity>
                   {renderBubble(props)}
