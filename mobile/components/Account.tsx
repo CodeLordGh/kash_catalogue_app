@@ -8,6 +8,14 @@ import axios from 'axios';
 import { baseUrl } from '@/baseUrl';
 import * as Clipboard from 'expo-clipboard';
 import { clearCart } from '@/app/screens/actionSlice';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { updateUserInfo } from '@/app/screens/userSlice';
+
+// Add this type definition at the top of your file
+type RootStackParamList = {
+  Login: undefined;
+  // Add other screen names and their param types here
+};
 
 const Account = () => {
   const dispatch = useDispatch();
@@ -15,7 +23,7 @@ const Account = () => {
   const [profileImage, setProfileImage] = useState('https://via.placeholder.com/150');
   const [editMode, setEditMode] = useState(false);
   const [editedInfo, setEditedInfo] = useState({ ...userInfo });
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
@@ -31,22 +39,23 @@ const Account = () => {
   };
 
   const handleSave = async () => {
+    console.log("saving...")
     try {
-      // Implement API call to update user info
-      // const response = await axios.put(`${baseUrl}/api/user/update`, editedInfo, {
-      //   headers: { Authorization: `Bearer ${userInfo.userAuth}` },
-      // });
-      // if (response.status === 200) {
-      //   // Dispatch action to update user info in Redux store
-      //   // dispatch(updateUserInfo(response.data));
-      //   setEditMode(false);
-      //   Alert.alert('Success', 'Your information has been updated.');
-      // }
-      setEditMode(false);
-      Alert.alert('Success', 'Your information has been updated.');
+      dispatch(setLoading(true));
+      const endpoint = userInfo.User === "User" ? '/api/buyer/profile' : '/api/seller/profile';
+      const response = await axios.put(`${baseUrl}${endpoint}`, editedInfo, {
+        headers: { Authorization: `Bearer ${userInfo.userAuth}` },
+      });
+      if (response.status === 200) {
+        dispatch(updateUserInfo(editedInfo));
+        setEditMode(false);
+        Alert.alert('Success', 'Your information has been updated.');
+      }
     } catch (error) {
       console.error('Error updating user info:', error);
       Alert.alert('Error', 'Failed to update your information. Please try again.');
+    } finally {
+      dispatch(setLoading(false));
     }
   };
 
@@ -65,7 +74,7 @@ const Account = () => {
 
       dispatch(clearCart())
       dispatch(logoutUser());
-      navigation.navigate("Login");
+      navigation.navigate('Login');
     } catch (error) {
       console.error('Logout error:', error);
       Alert.alert('Error', 'Failed to logout. Please try again.');
@@ -109,6 +118,14 @@ const Account = () => {
             editMode={editMode}
             onChangeText={(text: string) => setEditedInfo({ ...editedInfo, fullName: text })}
           />
+          {userInfo.User === "Seller" && (
+            <InfoItem
+              label="Business Name"
+              value={editedInfo.businessName || ''}
+              editMode={editMode}
+              onChangeText={(text: string) => setEditedInfo({ ...editedInfo, businessName: text })}
+            />
+          )}
           <InfoItem
             label="Email"
             value={editedInfo.email || ''}

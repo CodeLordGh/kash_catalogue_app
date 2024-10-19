@@ -16,6 +16,7 @@ import { authenticateToken } from '../Utils/auth';
 
 interface CustomRequest extends express.Request {
   buyerId?: string;
+  user?: { id: string };
 }
 
 const router = express.Router();
@@ -65,10 +66,19 @@ router.post('/register', async (req, res) => {
 });
 
 // Update buyer profile
-router.put('/profile', async (req:CustomRequest , res) => {
+router.put('/buyer/profile', authenticateToken, async (req: CustomRequest, res) => {
   try {
     const { fullName, phoneNumber } = req.body;
-    await updateBuyerProfile(req.buyerId? req.buyerId: "", fullName, phoneNumber);
+    const buyerId = req.user?.id;
+
+    console.log('Received update request:', { fullName, phoneNumber, buyerId });
+
+
+    if (!buyerId) {
+      console.log('User ID is missing');
+      return res.status(400).json({ message: 'User ID is required' });
+    }
+    await updateBuyerProfile(buyerId, fullName, phoneNumber);
     res.status(200).json({ message: 'Profile updated successfully' });
   } catch (error: any) {
     res.status(400).json({ message: error.message });

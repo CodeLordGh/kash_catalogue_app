@@ -77,16 +77,17 @@ const BuyerSchema: Schema = new Schema(
     ],
     orders: [{ type: Schema.Types.ObjectId, ref: "Order" }],
     associatedStores: [{ type: Schema.Types.ObjectId, ref: "Seller" }],
+    phoneNumber: { type: String },
     chatId: { type: String },
     fcmToken: {type: String},
   },
   { timestamps: true }
 );
 
-BuyerSchema.index(
-  { phoneNumber: 1, buyerId: 1 },
-  { unique: true, sparse: true }
-);
+// BuyerSchema.index(
+//   { phoneNumber: 1, buyerId: 1 },
+//   { unique: true, sparse: true }
+// );
 
 export const Buyer = mongoose.model<IBuyer>("Buyer", BuyerSchema);
 

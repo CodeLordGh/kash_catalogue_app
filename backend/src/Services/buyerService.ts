@@ -150,7 +150,7 @@ export const updateBuyerProfile = async (
   fullName: string,
   phoneNumber: string
 ): Promise<void> => {
-  const buyer = await Buyer.findOne({ buyerId });
+  const buyer = await Buyer.findById(buyerId);
 
   if (!buyer) {
     throw new Error("Buyer not found");

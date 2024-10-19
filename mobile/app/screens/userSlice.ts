@@ -137,6 +137,9 @@ const userSlice = createSlice({
     deleteProduct: (state, action: PayloadAction<string>) => {
       state.products = state.products.filter(p => p._id !== action.payload);
     },
+    updateUserInfo: (state, action: PayloadAction<Partial<UserState>>) => {
+      state.userInfo = { ...state.userInfo, ...action.payload };
+    },
   },
 });
 
@@ -153,5 +156,6 @@ export const {
   addProduct,
   updateProduct,
   deleteProduct,
+  updateUserInfo,
 } = userSlice.actions;
 export default userSlice.reducer;

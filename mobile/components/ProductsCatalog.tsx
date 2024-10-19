@@ -6,9 +6,17 @@ import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
 import { setLoading, setProducts } from '@/app/screens/userSlice';
 import { baseUrl } from '@/baseUrl';
+import { StackNavigationProp } from '@react-navigation/stack';
+
+type RootStackParamList = {
+  "Add Product": undefined;
+  // Add other screen names here
+};
+
+type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 const ProductsCatalog = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
   const dispatch = useDispatch();
   const products = useSelector((state: any) => state.user.products);
   const loading = useSelector((state: any) => state.user.loading);
@@ -71,7 +79,10 @@ const ProductsCatalog = () => {
           <View style={styles.emptyState}>
             <Ionicons name="basket-outline" size={64} color="#6200EE" />
             <Text style={styles.emptyStateText}>No products found</Text>
-            <TouchableOpacity style={styles.addProductButton} onPress={() => navigation.navigate("Add Product")}>
+            <TouchableOpacity 
+              style={styles.addProductButton} 
+              onPress={() => navigation.navigate("Add Product")}
+            >
               <Text style={styles.addProductButtonText}>Add a Product</Text>
             </TouchableOpacity>
           </View>

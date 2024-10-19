@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { Seller, Catalog, Product } from '../Models/models';
 import { authenticateToken } from '../Utils/auth';
+import { updateSellerProfile } from '../Services/sellerService';
 
 export interface CustomRequest extends Request {
   user?: {
@@ -163,5 +164,20 @@ function generateStoreId() {
   return  Math.floor(100000 + Math.random() * 900000);
 
 }
+
+// Update seller profile
+router.put('/seller/profile', authenticateToken, async (req: CustomRequest, res) => {
+  try {
+    const { fullName, businessName, phoneNumber } = req.body;
+    const sellerId = req.user?.id;
+    if (!sellerId) {
+      return res.status(400).json({ message: 'User ID is required' });
+    }
+    await updateSellerProfile(sellerId, fullName, businessName, phoneNumber);
+    res.status(200).json({ message: 'Profile updated successfully' });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+});
 
 export default router;
