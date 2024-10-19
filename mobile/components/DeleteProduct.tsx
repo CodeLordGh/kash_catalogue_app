@@ -4,46 +4,28 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
-import { setLoading } from '@/app/screens/userSlice';
+import { setLoading, deleteProduct, updateProduct } from '@/app/screens/userSlice';
 import { baseUrl } from '@/baseUrl';
 
 const DeleteProduct = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const [catalogData, setCatalogData] = useState([]);
-  const token = useSelector((state:any) => state.user.userInfo.userAuth);
-  const loading = useSelector((state:any) => state.user.loading);
+  const token = useSelector((state: any) => state.user.userInfo.userAuth);
+  const loading = useSelector((state: any) => state.user.loading);
+  const products = useSelector((state: any) => state.user.products);
   const [updateModalVisible, setUpdateModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [updatedName, setUpdatedName] = useState('');
   const [updatedPrice, setUpdatedPrice] = useState('');
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
-    try {
-      dispatch(setLoading(true));
-      const response = await axios.get(`${baseUrl}/api/products`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setCatalogData(response.data);
-      dispatch(setLoading(false));
-    } catch (error) {
-      dispatch(setLoading(false));
-      Alert.alert('Error', 'Unable to retrieve product data. Please try again.');
-    }
-  };
-
-  const handleDelete = async (id:string) => {
+  const handleDelete = async (id: string) => {
     Alert.alert(
       'Confirm Delete',
       'Are you sure you want to delete this product?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
+        {
+          text: 'Delete',
           style: 'destructive',
           onPress: async () => {
             try {
@@ -51,7 +33,8 @@ const DeleteProduct = () => {
               await axios.delete(`${baseUrl}/api/product/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
               });
-              fetchProducts(); // Refresh the list after deletion
+              dispatch(deleteProduct(id));
+              dispatch(setLoading(false));
             } catch (error) {
               dispatch(setLoading(false));
               Alert.alert('Error', 'Failed to delete the product. Please try again.');
@@ -62,7 +45,7 @@ const DeleteProduct = () => {
     );
   };
 
-  const handleUpdate = (product:any) => {
+  const handleUpdate = (product: any) => {
     setSelectedProduct(product);
     setUpdatedName(product.name);
     setUpdatedPrice(product.price.toString());
@@ -76,23 +59,29 @@ const DeleteProduct = () => {
     }
     try {
       dispatch(setLoading(true));
+      const updatedProduct = {
+        ...(selectedProduct as any),
+        name: updatedName,
+        price: parseFloat(updatedPrice),
+      };
       await axios.put(
-        `${baseUrl}/api/product/${selectedProduct? selectedProduct._id : ""}`,
-        { name: updatedName, price: parseFloat(updatedPrice) },
+        `${baseUrl}/api/product/${(selectedProduct as any)._id}`,
+        updatedProduct,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      dispatch(updateProduct(updatedProduct));
       setUpdateModalVisible(false);
-      fetchProducts(); // Refresh the list after update
+      dispatch(setLoading(false));
     } catch (error) {
       dispatch(setLoading(false));
       Alert.alert('Error', 'Failed to update the product. Please try again.');
     }
   };
 
-  const renderProductItem = ({ item }:any) => (
+  const renderProductItem = ({ item }: any) => (
     <View style={styles.productItem}>
       <Image
-        source={{ uri: item.image || 'https://via.placeholder.com/60' }}
+        source={{ uri: item.images[0] || 'https://via.placeholder.com/60' }}
         style={styles.productImage}
       />
       <View style={styles.productInfo}>
@@ -122,11 +111,11 @@ const DeleteProduct = () => {
       <View style={styles.productsContainer}>
         {loading ? (
           <ActivityIndicator size="large" color="#6200EE" />
-        ) : catalogData.length > 0 ? (
+        ) : products.length > 0 ? (
           <FlatList
-            data={catalogData}
+            data={products}
             renderItem={renderProductItem}
-            keyExtractor={(item) => item._id}
+            keyExtractor={(item: any) => item._id}
             showsVerticalScrollIndicator={false}
           />
         ) : (

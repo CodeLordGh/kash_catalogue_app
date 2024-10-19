@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import {
   View,
@@ -15,7 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { setLoading } from '@/app/screens/userSlice';
+import { setLoading, addProduct } from '@/app/screens/userSlice';
 import { baseUrl } from '@/baseUrl';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
@@ -34,7 +33,7 @@ const AddProduct = () => {
   const [price, setPrice] = useState('');
   const [color, setColor] = useState('');
   const [qty, setQty] = useState('');
-  const [images, setImages] = useState(() => [] as ImagePicker.ImagePickerAsset[]);
+  const [images, setImages] = useState<string[]>([]);
 const [variants, setVariants] = useState<{ color: string; qty: number }[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
   const handleAddVariant = () => {
@@ -64,12 +63,12 @@ const [variants, setVariants] = useState<{ color: string; qty: number }[]>([]);
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsMultipleSelection: true,
         quality: 1,
+        aspect: [4, 3],
       });
   
-      if (!result.canceled) {
-        const selectedImages = result.assets.map(asset => asset.uri);
-        console.log('Selected images:', selectedImages);
-        setImages(selectedImages);
+      if (!result.canceled && result.assets) {
+        const newImageUris = result.assets.map(asset => asset.uri);
+        setImages(prevImages => [...prevImages, ...newImageUris]);
       }
     } catch (error) {
       console.error('Error in handleUploadPhoto:', error);
@@ -93,22 +92,27 @@ const [variants, setVariants] = useState<{ color: string; qty: number }[]>([]);
   
       console.log('Uploaded image URLs:', imageUrls);
   
+      const newProduct = {
+        name,
+        description,
+        price: parseFloat(price),
+        stock: variants,
+        images: imageUrls,
+      };
+
       const response = await axios.post(
         `${baseUrl}/api/product`,
-        {
-          name,
-          description,
-          price: parseFloat(price),
-          stock: variants,
-          images: imageUrls,
-        },
+        newProduct,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-  
+
+      // Add the new product to the Redux store
+      dispatch(addProduct(response.data.product));
+
       dispatch(setLoading(false));
       Alert.alert('Success', response.data.message);
       navigation.goBack();
@@ -117,6 +121,10 @@ const [variants, setVariants] = useState<{ color: string; qty: number }[]>([]);
       console.error('Error in handlePublish:', error);
       Alert.alert('Error', 'Failed to add product. Please try again.');
     }
+  };
+
+  const handleRemoveImage = (indexToRemove: number) => {
+    setImages(prevImages => prevImages.filter((_, index) => index !== indexToRemove));
   };
 
   return (
@@ -139,8 +147,20 @@ const [variants, setVariants] = useState<{ color: string; qty: number }[]>([]);
       >
         <View style={styles.imageContainer}>
           {images.length > 0 ? (
-            images.map((image, index) => (
-              <Image key={index} source={{ uri: image.uri }} style={styles.image} />
+            images.map((uri, index) => (
+              <View key={index} style={styles.imageWrapper}>
+                <Image 
+                  source={{ uri }} 
+                  style={styles.image} 
+                  resizeMode="cover"
+                />
+                <TouchableOpacity
+                  style={styles.removeImageButton}
+                  onPress={() => handleRemoveImage(index)}
+                >
+                  <Ionicons name="close-circle" size={24} color="#FF3B30" />
+                </TouchableOpacity>
+              </View>
             ))
           ) : (
             <View style={styles.imagePlaceholder}>
@@ -267,12 +287,23 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     marginBottom: 20,
   },
+  imageWrapper: {
+    position: 'relative',
+    marginRight: 10,
+    marginBottom: 10,
+  },
   image: {
     width: 100,
     height: 100,
     borderRadius: 10,
-    marginRight: 10,
-    marginBottom: 10,
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: -10,
+    right: -10,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 2,
   },
   imagePlaceholder: {
     width: 100,

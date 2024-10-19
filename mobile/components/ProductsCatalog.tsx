@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Image, ActivityIndicator, FlatList } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -11,9 +10,9 @@ import { baseUrl } from '@/baseUrl';
 const ProductsCatalog = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const catalog = useSelector((state:any) => state.user.products);
-  const loading = useSelector((state:any) => state.user.loading);
-  const token = useSelector((state:any) => state.user.userInfo.userAuth);
+  const products = useSelector((state: any) => state.user.products);
+  const loading = useSelector((state: any) => state.user.loading);
+  const token = useSelector((state: any) => state.user.userInfo.userAuth);
 
   useEffect(() => {
     const getProducts = async () => {
@@ -33,12 +32,12 @@ const ProductsCatalog = () => {
     };
 
     getProducts();
-  }, []);
+  }, [navigation]);
 
   const renderProductItem = ({ item, index }:any) => (
-    <TouchableOpacity style={styles.productItem} onPress={() => {}}>
+    <TouchableOpacity style={styles.productItem} onPress={() => {}} key={index}>
       <Image
-        source={{ uri: item.image || 'https://via.placeholder.com/100' }}
+        source={{ uri: item.images[0] || 'https://via.placeholder.com/100' }}
         style={styles.productImage}
       />
       <View style={styles.productInfo}>
@@ -61,9 +60,9 @@ const ProductsCatalog = () => {
       <View style={styles.productsContainer}>
         {loading ? (
           <ActivityIndicator size="large" color="#6200EE" />
-        ) : catalog.length >= 1 ? (
+        ) : products.length >= 1 ? (
           <FlatList
-            data={catalog}
+            data={products}
             renderItem={renderProductItem}
             keyExtractor={(item) => item._id}
             showsVerticalScrollIndicator={false}

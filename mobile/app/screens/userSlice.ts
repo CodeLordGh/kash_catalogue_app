@@ -22,11 +22,13 @@ export interface Order {
 }
 
 interface Product {
-  name: string;
-  description: string;
-  price: number;
   _id: string;
-  stock: Array<{ color: string; qty: number }>;
+  name: string;
+  price: number;
+  description: string;
+  stock: { color: string; qty: number }[];
+  sizes: string[];
+  images: string[];
 }
 
 interface UserState {
@@ -58,7 +60,7 @@ const initialState: UserState = {
     storeId: "",
   },
   loading: false,
-  products: [],
+  products: [] as Product[],
   orders: [],
 };
 
@@ -118,6 +120,23 @@ const userSlice = createSlice({
       state.loading = false;
       state.products = [];
     },
+    addProduct: (state, action: PayloadAction<Product>) => {
+      // Check if the payload is defined and has an _id
+      if (action.payload && action.payload._id) {
+        state.products.unshift(action.payload);
+      } else {
+        console.error('Invalid product data:', action.payload);
+      }
+    },
+    updateProduct: (state, action: PayloadAction<Product>) => {
+      const index = state.products.findIndex(p => p._id === action.payload._id);
+      if (index !== -1) {
+        state.products[index] = action.payload;
+      }
+    },
+    deleteProduct: (state, action: PayloadAction<string>) => {
+      state.products = state.products.filter(p => p._id !== action.payload);
+    },
   },
 });
 
@@ -131,5 +150,8 @@ export const {
   setProducts,
   logoutUser,
   setOrders,
+  addProduct,
+  updateProduct,
+  deleteProduct,
 } = userSlice.actions;
 export default userSlice.reducer;
