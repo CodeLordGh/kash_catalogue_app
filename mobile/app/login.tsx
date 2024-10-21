@@ -22,6 +22,8 @@ import { baseUrl } from '@/baseUrl';
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
+console.log(baseUrl)
+
 const LoginScreen = () => {
   const [storeId, setStoreId] = useState('');
   const [email, setEmail] = useState('');
@@ -62,7 +64,7 @@ const LoginScreen = () => {
       }
     } catch (error: any) {
 
-      console.log(error.response)
+      console.log(error)
       Alert.alert(
         'Login Failed',
         error.response?.data?.error || 'An unexpected error occurred. Please try again.'

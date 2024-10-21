@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { StyleSheet, View, TouchableOpacity, Text, Modal, Animated, Alert, KeyboardAvoidingView } from 'react-native';
-import { GiftedChat, IMessage as GiftedChatIMessage, Bubble } from 'react-native-gifted-chat';
+import { StyleSheet, View, TouchableOpacity, Text, Modal, Animated, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { GiftedChat, IMessage as GiftedChatIMessage, Bubble, InputToolbar, Composer } from 'react-native-gifted-chat';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ref, onChildAdded, off } from 'firebase/database';
 import { database } from './firebase';
@@ -20,6 +20,7 @@ interface ProductInfo {
   name: string;
   price: number;
   description: string;
+  // Add any other fields you need
 }
 
 
@@ -33,7 +34,7 @@ const Chat: React.FC = () => {
   const navigation = useNavigation();
   const chatId = useSelector((state: any) => state.user.chatId) as string;
   const currentUser = useSelector((state: any) => state.user.userInfo);
-  const isVendor = currentUser.User === 'Seller';
+  const products = useSelector((state: any) => state.user.products);
 
   const chatRef = useRef(ref(database, `chats/${chatId}/messages`));
 
@@ -117,6 +118,14 @@ const Chat: React.FC = () => {
 
   const handleSend = useCallback(async (newMessages: IMessage[] = []) => {
     const message = newMessages[0];
+    const productIdRegex = /\b\d{6}\b/;
+    const match = message.text.match(productIdRegex);
+
+    if (match) {
+      const productId = match[0];
+      message.text = `[Product ${productId}] ${message.text}`;
+    }
+
     setMessages((prevMessages) => {
       const messageExists = prevMessages.some((msg) => msg._id === message._id);
       if (!messageExists) {
@@ -127,63 +136,43 @@ const Chat: React.FC = () => {
     await sendMessageToServer(message);
   }, [sendMessageToServer]);
 
-  const renderBubble = useCallback((props: any) => {
-    const { currentMessage } = props;
-    const productIdRegex = /\b\d{6}\b/;
-    const match = currentMessage.text.match(productIdRegex);
+  const renderInputToolbar = (props: any) => (
+    <InputToolbar
+      {...props}
+      containerStyle={styles.inputToolbar}
+      primaryStyle={styles.inputPrimary}
+    />
+  );
 
-    if (isVendor && match) {
-      return (
-        <TouchableOpacity onPress={() => handleProductPress(match[0])}>
-          <Bubble
-            {...props}
-            wrapperStyle={{
-              right: {
-                backgroundColor: '#6200EE',
-              },
-              left: {
-                backgroundColor: '#f0f0f0',
-              },
-            }}
-          />
-        </TouchableOpacity>
-      );
-    }
+  const renderComposer = (props: any) => (
+    <Composer
+      {...props}
+      textInputStyle={styles.composerTextInput}
+    />
+  );
 
-    return (
-      <Bubble
-        {...props}
-        wrapperStyle={{
-          right: {
-            backgroundColor: '#6200EE',
-          },
-          left: {
-            backgroundColor: '#f0f0f0',
-          },
-        }}
-      />
-    );
-  }, [isVendor]);
-
-  const handleProductPress = useCallback(async (productId: string) => {
-    try {
-      const response = await axios.get(`${baseUrl}/api/products/${productId}`, {
-        headers: {
-          Authorization: `Bearer ${auth}`,
-        },
-      });
-      setSelectedProduct(response.data);
+  const handleProductPress = useCallback((productId: string) => {
+    const product = products.find((p:any) => p.productId === productId);
+    
+    if (product) {
+      const selectedProductInfo = {
+        id: product.productId,
+        name: product.name,
+        price: product.price,
+        description: product.description,
+      };
+      
+      setSelectedProduct(selectedProductInfo);
       setProductModalVisible(true);
       Animated.timing(modalAnimation, {
         toValue: 1,
         duration: 300,
         useNativeDriver: true,
       }).start();
-    } catch (error) {
-      console.error('Error fetching product info:', error);
-      Alert.alert("Error fetching product info")
+    } else {
+      Alert.alert("Error", "Unable to find product information. Please try again later.");
     }
-  }, [auth, modalAnimation]);
+  }, [products, modalAnimation]);
 
   const closeProductModal = useCallback(() => {
     Animated.timing(modalAnimation, {
@@ -196,6 +185,30 @@ const Chat: React.FC = () => {
     });
   }, [modalAnimation]);
 
+  const renderBubble = useCallback((props: any) => {
+    const { currentMessage } = props;
+    
+    const productIdRegex = /\b\d{6}\b/;
+    const match = currentMessage.text.match(productIdRegex);
+
+    return (
+      <Bubble
+        {...props}
+        wrapperStyle={{
+          right: { ...styles.rightBubble, marginVertical: 5 },
+          left: { ...styles.leftBubble, marginVertical: 5 },
+        }}
+        textStyle={{
+          right: styles.rightBubbleText,
+          left: styles.leftBubbleText,
+        }}
+        touchableProps={{
+          onPress: match ? () => handleProductPress(match[0]) : undefined,
+        }}
+      />
+    );
+  }, [handleProductPress]);
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -204,7 +217,11 @@ const Chat: React.FC = () => {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Chat</Text>
       </View>
-      <KeyboardAvoidingView style={styles.chatContainer} behavior="padding">
+      <KeyboardAvoidingView 
+        style={styles.chatContainer} 
+        behavior={Platform.OS !== "ios" ? "height" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+      >
         <GiftedChat
           messages={messages}
           onSend={handleSend}
@@ -213,7 +230,8 @@ const Chat: React.FC = () => {
           }}
           renderBubble={renderBubble}
           renderAvatar={null}
-          bottomOffset={100}
+          renderInputToolbar={renderInputToolbar}
+          renderComposer={renderComposer}
           renderMessage={(props) => {
             const { currentMessage } = props;
             if ((currentMessage as any).failed) {
@@ -258,7 +276,9 @@ const Chat: React.FC = () => {
             {selectedProduct && (
               <>
                 <Text style={styles.productTitle}>{selectedProduct.name}</Text>
-                <Text style={styles.productPrice}>Price: ${selectedProduct.price.toFixed(2)}</Text>
+                <Text style={styles.productPrice}>
+                  Price: ${selectedProduct.price ? selectedProduct.price.toFixed(2) : 'N/A'}
+                </Text>
                 <Text style={styles.productDescription}>{selectedProduct.description}</Text>
               </>
             )}
@@ -294,7 +314,47 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     overflow: 'hidden',
-    marginBottom:20
+  },
+  inputToolbar: {
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    paddingTop: 6,
+    paddingHorizontal: 8,
+  },
+  inputPrimary: {
+    alignItems: 'center',
+  },
+  composerTextInput: {
+    color: '#333',
+    fontSize: 16,
+    lineHeight: 20,
+    marginTop: 6,
+    marginBottom: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 20,
+  },
+  rightBubble: {
+    backgroundColor: '#6200EE',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  leftBubble: {
+    backgroundColor: '#f0f0f0',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  rightBubbleText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  leftBubbleText: {
+    color: '#333',
+    fontSize: 16,
   },
   modalOverlay: {
     flex: 1,

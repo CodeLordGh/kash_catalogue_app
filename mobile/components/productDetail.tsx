@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -10,6 +10,8 @@ import {
   Animated,
   Alert,
   ActivityIndicator,
+  FlatList,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -21,13 +23,26 @@ import {
   setSelectedSize,
 } from '@/app/screens/actionSlice';
 import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+
+type RootStackParamList = {
+  Chat: undefined;
+  ProductDetails: undefined;
+  Cart: undefined;
+};
+
+type ProductDetailsNavigationProp = StackNavigationProp<RootStackParamList, 'ProductDetails'>;
+
+const { width: screenWidth } = Dimensions.get('window');
 
 const ProductDetails: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<ProductDetailsNavigationProp>();
   const dispatch = useDispatch();
   const { selectedColor, selectedSize, quantity, selectedProduct } = useSelector((state: any) => state.action);
   const [isLoading, setIsLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const flatListRef = useRef<FlatList>(null);
 
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
@@ -40,7 +55,24 @@ const ProductDetails: React.FC = () => {
 
     // Simulate loading delay
     setTimeout(() => setIsLoading(false), 1000);
-  }, []);
+
+    const imageInterval = setInterval(() => {
+      if (selectedProduct.images && selectedProduct.images.length > 1) {
+        setCurrentImageIndex((prevIndex) =>
+          (prevIndex + 1) % selectedProduct.images.length
+        );
+      }
+    }, 3000);
+
+    return () => clearInterval(imageInterval);
+  }, [selectedProduct.images]);
+
+  useEffect(() => {
+    flatListRef.current?.scrollToIndex({
+      index: currentImageIndex,
+      animated: true,
+    });
+  }, [currentImageIndex]);
 
   const handleColorSelect = (color: string) => {
     dispatch(setSelectedColor(color));
@@ -81,6 +113,20 @@ const ProductDetails: React.FC = () => {
     // TODO: Implement favorite logic in backend
   };
 
+  const handleVendorChat = () => {
+    const productId = selectedProduct.productId || '';
+    navigation.navigate('Chat');
+    // You might need to implement a way to set the initial message in the Chat component
+    // For now, we'll just navigate to the Chat screen
+  };
+
+  const renderImageItem = ({ item }: { item: string }) => (
+    <Image
+      source={{ uri: item }}
+      style={styles.productImage}
+    />
+  );
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -102,10 +148,33 @@ const ProductDetails: React.FC = () => {
 
       <ScrollView style={styles.content}>
         <Animated.View style={[styles.imageContainer, { opacity: fadeAnim }]}>
-          <Image
-            source={{ uri: selectedProduct.imageUrl || 'https://example.com/placeholder.jpg' }}
-            style={styles.productImage}
+          <FlatList
+            ref={flatListRef}
+            data={selectedProduct.images || []}
+            renderItem={renderImageItem}
+            keyExtractor={(item, index) => index.toString()}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={(event) => {
+              const newIndex = Math.floor(
+                event.nativeEvent.contentOffset.x / screenWidth
+              );
+              setCurrentImageIndex(newIndex);
+            }}
           />
+          <View style={styles.paginationDots}>
+            {selectedProduct.images &&
+              selectedProduct.images.map((_: any, index: number) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.paginationDot,
+                    index === currentImageIndex && styles.paginationDotActive,
+                  ]}
+                />
+              ))}
+          </View>
         </Animated.View>
 
         <View style={styles.productInfo}>
@@ -136,7 +205,7 @@ const ProductDetails: React.FC = () => {
               ))
             ) : (
               <Text style={styles.unavailableText}>Size not available! Contact 
-                <TouchableOpacity style={styles.vendorButton} onPress={() => navigation.navigate("Chat")}>
+                <TouchableOpacity style={styles.vendorButton} onPress={handleVendorChat}>
                   <Text style={styles.vendorButtonText}>Vendor</Text>
                 </TouchableOpacity>
               </Text>
@@ -178,7 +247,7 @@ const ProductDetails: React.FC = () => {
           <View style={styles.footer}>
             <View>
               <Text style={styles.totalPriceLabel}>TOTAL PRICE</Text>
-              <Text style={styles.totalPriceValue}>${(selectedProduct.price * quantity).toFixed(2)}</Text>
+              <Text style={styles.totalPriceValue}>GH₵{(selectedProduct.price * quantity).toFixed(2)}</Text>
             </View>
             <TouchableOpacity style={styles.addToCartButton} onPress={handleAddToCart}>
               <Text style={styles.addToCartButtonText}>ADD TO CART</Text>
@@ -222,8 +291,8 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 30,
   },
   productImage: {
-    width: '80%',
-    height: '80%',
+    width: screenWidth,
+    height: 300,
     resizeMode: 'contain',
   },
   productInfo: {
@@ -364,6 +433,24 @@ const styles = StyleSheet.create({
   vendorButtonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  paginationDots: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    bottom: 10,
+    width: '100%',
+  },
+  paginationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ccc',
+    marginHorizontal: 4,
+  },
+  paginationDotActive: {
+    backgroundColor: '#6200EE',
   },
 });
 

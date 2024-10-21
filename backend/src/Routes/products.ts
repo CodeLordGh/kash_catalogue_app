@@ -14,6 +14,22 @@ interface CustomRequest extends Request {
 
 const router = express.Router();
 
+// Add a function to generate a unique 6-digit product ID
+const generateUniqueProductId = async (): Promise<string> => {
+  let productId: string = '';
+  let isUnique = false;
+
+  while (!isUnique) {
+    productId = Math.floor(100000 + Math.random() * 900000).toString();
+    const existingProduct = await Product.findOne({ productId });
+    if (!existingProduct) {
+      isUnique = true;
+    }
+  }
+
+  return productId;
+};
+
 // Create Product
 router.post('/product', authenticateToken, async (req: CustomRequest, res: Response) => {
     try {
@@ -27,13 +43,16 @@ router.post('/product', authenticateToken, async (req: CustomRequest, res: Respo
         return res.status(404).json({ message: 'Seller not found' });
       }
   
+      const productId = await generateUniqueProductId();
+  
       const newProduct = new Product({
         name,
         description,
         price,
         stock,
         images,
-        catalog: seller.catalog
+        catalog: seller.catalog,
+        productId, // Add this line
       });
   
       await newProduct.save();
@@ -56,10 +75,10 @@ router.post('/product', authenticateToken, async (req: CustomRequest, res: Respo
       
         console.log(`Push notifications sent to ${fcmTokens.length} customers`);
       };
-      await sendPushNotificationToCustomers(seller, {title: "New Product", body: `${seller.businessName} has added a new item. Check it out`})
+      await sendPushNotificationToCustomers(seller, {title: "New Product", body: `${seller.businessName} has added a new item. Check it out using product ID: ${productId}`})
       // Send response
   
-      res.status(201).json({message: "Item added succesfully"});
+      res.status(201).json({message: "Item added succesfully", productId});
     } catch (error) {
       res.status(500).json({ message: 'Error creating product', error });
     }
@@ -141,24 +160,79 @@ router.post('/product', authenticateToken, async (req: CustomRequest, res: Respo
     try {
       const { id } = req.params;
       const sellerId = req.user?.id;
-  
-      const seller = await Seller.findById(sellerId);
-      if (!seller) {
-        return res.status(404).json({ message: 'Seller not found' });
-      }
-  
-      const product = await Product.findOne({ _id: id, catalog: seller.catalog });
-  
+
+      console.log(`Searching for product with id: ${id}`);
+      console.log(`Authenticated seller id: ${sellerId}`);
+
+      // const seller = await Seller.findById(sellerId);
+      // if (!seller) {
+      //   console.log(`Seller not found for id: ${sellerId}`);
+      //   return res.status(404).json({ message: 'Seller not found' });
+      // }
+
+      // console.log(`Seller's catalog id: ${seller.catalog}`);
+
+      const product = await Product.findOne(id.length === 24 ? { _id: id} : { productId: id });
+
+      console.log(`Product search result:`, product);
+
       if (!product) {
         return res.status(404).json({ message: 'Product not found' });
       }
-  
+
       res.json({ product });
     } catch (error) {
+      console.error('Error in /products/:id route:', error);
       res.status(500).json({ message: 'Error getting product', error });
     }
   });
 
+  // Add a new route to handle product inquiries
+  router.get('/product/inquiry/:productId', authenticateToken, async (req: CustomRequest, res: Response) => {
+    try {
+      const { productId } = req.params;
+      const buyerId = req.user?.id;
+
+      const buyer = await Buyer.findById(buyerId);
+      if (!buyer) {
+        return res.status(404).json({ message: 'Buyer not found' });
+      }
+
+      const product = await Product.findOne({ productId }).populate('catalog');
+      if (!product) {
+        return res.status(404).json({ message: 'Product not found' });
+      }
+
+      const seller = await Seller.findOne({ catalog: product.catalog });
+      if (!seller) {
+        return res.status(404).json({ message: 'Seller not found' });
+      }
+
+      // Create or update chat between buyer and seller
+      // This is a placeholder - you'll need to implement the actual chat logic
+      const chatId = `${buyer._id}-${seller._id}`;
+
+      // Send notification to seller about the inquiry
+      const notificationData: NotificationData = {
+        title: "Product Inquiry",
+        body: `A buyer is inquiring about product: ${product.name} (ID: ${productId})`
+      };
+      await sendPushNotification(seller.fcmToken, notificationData);
+
+      res.json({ 
+        message: 'Inquiry sent successfully', 
+        chatId,
+        product: {
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          images: product.images
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Error processing inquiry', error });
+    }
+  });
 
 // import express, { Request, Response } from 'express';
 // import { ObjectId } from 'mongodb';
@@ -336,3 +410,4 @@ router.post('/product', authenticateToken, async (req: CustomRequest, res: Respo
 // };
 
 export default router;
+

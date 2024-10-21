@@ -169,6 +169,7 @@ function generateStoreId() {
 router.put('/seller/profile', authenticateToken, async (req: CustomRequest, res) => {
   try {
     const { fullName, businessName, phoneNumber } = req.body;
+    console.log(fullName, businessName, phoneNumber)
     const sellerId = req.user?.id;
     if (!sellerId) {
       return res.status(400).json({ message: 'User ID is required' });

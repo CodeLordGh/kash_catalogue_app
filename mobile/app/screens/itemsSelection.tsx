@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -54,32 +53,48 @@ const ItemSelectionFragment: React.FC = () => {
       }).start();
     }, []);
 
+    const getColorStyle = (color: string) => {
+      const lowerColor = color.toLowerCase();
+      const commonColors: { [key: string]: string } = {
+        red: '#FF0000',
+        blue: '#0000FF',
+        green: '#008000',
+        yellow: '#FFFF00',
+        purple: '#800080',
+        orange: '#FFA500',
+        pink: '#FFC0CB',
+        brown: '#A52A2A',
+        gray: '#808080',
+        black: '#000000',
+        white: '#FFFFFF',
+      };
+
+      return {
+        color: commonColors[lowerColor] || lowerColor,
+        fontWeight: 'bold' as const,
+      };
+    };
+
     return (
-      <Animated.View style={[styles.itemCard, { opacity: fadeAnim }]}>
-        <Image source={product.images ? {uri: product.images[0]} :require('../../assets/images/downloa.png')} style={styles.itemImage} />
-        <Text style={styles.itemTitle} numberOfLines={1}>{product.name}</Text>
-        <Text style={styles.itemPrice}>${product.price.toFixed(2)}</Text>
-        <TouchableOpacity
-          style={styles.viewDetailsButton}
-          onPress={() => {
-            dispatch(setSelectedProduct(product));
-            navigation.navigate('ProductPage');
-          }}
-        >
-          <Text style={styles.viewDetailsText}>View Details</Text>
-        </TouchableOpacity>
-        <View style={styles.colorOptions}>
-          {product.stock.slice(0, 3).map((color, index) => (
-            <View
-              key={index}
-              style={[styles.colorOption, { backgroundColor: color.color }]}
-            />
-          ))}
-          {product.stock.length > 3 && (
-            <Text style={styles.moreColorsText}>+{product.stock.length - 3}</Text>
-          )}
-        </View>
-      </Animated.View>
+      <TouchableOpacity
+        onPress={() => {
+          dispatch(setSelectedProduct(product));
+          navigation.navigate('ProductPage');
+        }}
+        style={{width: '45%', marginHorizontal: 10, marginBottom: 20}}
+      >
+        <Animated.View style={[styles.itemCard, { opacity: fadeAnim }]}>
+          <Image source={product.images ? {uri: product.images[0]} : require('../../assets/images/downloa.png')} style={styles.itemImage} />
+          <Text style={styles.itemTitle} numberOfLines={2}>{product.name}</Text>
+          <Text style={styles.availableColors}>
+            Available in: {product.stock.map((colorObj, index) => (
+              <Text key={index} style={getColorStyle(colorObj.color)}>
+                {colorObj.color}{index < product.stock.length - 1 ? ', ' : ''}
+              </Text>
+            ))}
+          </Text>
+        </Animated.View>
+      </TouchableOpacity>
     );
   };
 
@@ -175,65 +190,31 @@ const styles = StyleSheet.create({
   },
   itemCard: {
     backgroundColor: '#fff',
-    borderRadius: 15,
-    padding: 15,
-    margin: 10,
-    alignItems: 'center',
-    width: '45%',
+    borderRadius: 10,
+    overflow: 'hidden',
     elevation: 3,
   },
   itemImage: {
-    width: 100,
-    height: 100,
-    resizeMode: 'contain',
-    marginBottom: 10,
+    width: '100%',
+    height: 150,
+    resizeMode: 'cover',
   },
   itemTitle: {
     color: '#333',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 5,
+    fontSize: 14,
+    padding: 10,
+    height: 50,
   },
-  itemPrice: {
-    color: '#6200EE',
-    fontWeight: 'bold',
-    fontSize: 18,
-    marginBottom: 10,
-  },
-  viewDetailsButton: {
-    backgroundColor: '#6200EE',
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 20,
-    marginTop: 5,
-  },
-  viewDetailsText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  colorOptions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  colorOption: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    marginHorizontal: 2,
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  moreColorsText: {
-    color: '#666',
+  availableColors: {
     fontSize: 12,
-    marginLeft: 5,
+    color: '#666',
+    padding: 10,
+    paddingTop: 0,
   },
   noResultsContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    // justifyContent: 'space-between',
+    // alignItems: 'center',
   },
   noResultsText: {
     fontSize: 18,

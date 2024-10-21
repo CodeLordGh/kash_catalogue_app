@@ -29,6 +29,7 @@ interface Product {
   stock: { color: string; qty: number }[];
   sizes: string[];
   images: string[];
+  productId: string; // Add this line
 }
 
 interface UserState {
