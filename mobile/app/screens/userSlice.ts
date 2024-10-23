@@ -24,12 +24,12 @@ export interface Order {
 interface Product {
   _id: string;
   name: string;
-  price: number;
   description: string;
-  stock: { color: string; qty: number }[];
-  sizes: string[];
+  price: number;
+  stock: { color: string; qty: number; size?: string }[];
+  catalog: string;
   images: string[];
-  productId: string; // Add this line
+  productId: string;
 }
 
 interface UserState {
@@ -122,7 +122,6 @@ const userSlice = createSlice({
       state.products = [];
     },
     addProduct: (state, action: PayloadAction<Product>) => {
-      // Check if the payload is defined and has an _id
       if (action.payload && action.payload._id) {
         state.products.unshift(action.payload);
       } else {

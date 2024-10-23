@@ -47,9 +47,10 @@ export default function Index() {
           screenOptions={{ headerShown: false }}
           initialRouteName="Login"
         >
-          <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
+          
           <Stack.Screen name="BuyerMainScreen" component={BuyerMainScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
           <Stack.Screen name="SellerMainScreen" component={SellerMainScreen} />
           <Stack.Screen name="ProductPage" component={ProductDetails} />
           <Stack.Screen name="Chat" component={Chat} />

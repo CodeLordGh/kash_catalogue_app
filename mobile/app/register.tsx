@@ -62,13 +62,13 @@ const RegisterScreen = () => {
     setIsLoading(true);
     try {
       if (option === "storeId") {
-        await axios.post(
+        const response = await axios.post(
           `${baseUrl}/api/register`,
           { storeId }
         );
-        navigation.navigate("BuyerMainScreen");
+        navigation.navigate('BuyerMainScreen', { userData: response.data });
       } else {
-        await axios.post(
+        const response = await axios.post(
           `${baseUrl}/api/seller/register`,
           {
             fullName,
@@ -77,10 +77,9 @@ const RegisterScreen = () => {
             password,
           }
         );
-        navigation.navigate("SellerMainScreen");
+        navigation.navigate('SellerMainScreen', { userData: response.data });
       }
     } catch (error: any) {
-      console.log("register error line 83", error)
       Alert.alert(
         "Registration Failed",
         error.response?.data?.message ||

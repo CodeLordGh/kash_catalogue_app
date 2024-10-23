@@ -97,10 +97,20 @@ const ProductDetails: React.FC = () => {
   };
 
   const handleAddToCart = () => {
-    if (!selectedColor || !selectedSize) {
+    if (!selectedColor) {
+      Alert.alert('Selection Required', 'Please select a color before adding to cart.');
+      return;
+    }
+
+    // Check if sizes are available for this product
+    const hasSizes = selectedProduct.sizes && selectedProduct.sizes.length > 0;
+
+    // If sizes are available but not selected, show an alert
+    if (hasSizes && !selectedSize) {
       Alert.alert('Selection Required', 'Please select both color and size before adding to cart.');
       return;
     }
+
     dispatch(addToCart());
     Alert.alert('Success', 'Item added to cart!', [
       { text: 'Continue Shopping', style: 'cancel' },
@@ -118,6 +128,12 @@ const ProductDetails: React.FC = () => {
     navigation.navigate('Chat');
     // You might need to implement a way to set the initial message in the Chat component
     // For now, we'll just navigate to the Chat screen
+  };
+
+  const handleContactStore = () => {
+    // Implement the logic to contact the store
+    // This could navigate to a chat screen or show contact information
+    Alert.alert("Contact Store", "This feature is not implemented yet.");
   };
 
   const renderImageItem = ({ item }: { item: string }) => (
@@ -190,21 +206,31 @@ const ProductDetails: React.FC = () => {
 
           <Text style={styles.sectionTitle}>Size</Text>
           <View style={styles.optionsContainer}>
-            {selectedProduct.sizes && selectedProduct.sizes.length > 0 ? (
-              selectedProduct.sizes.map((size: string) => (
-                <TouchableOpacity
-                  key={size}
-                  style={[
-                    styles.optionButton,
-                    selectedSize === size && styles.selectedOptionButton,
-                  ]}
-                  onPress={() => handleSizeSelect(size)}
-                >
-                  <Text style={[styles.optionButtonText, selectedSize === size && styles.selectedOptionButtonText]}>{size}</Text>
-                </TouchableOpacity>
-              ))
+            {selectedProduct.stock && selectedProduct.stock.some((item:any) => item.size) ? (
+              <>
+                {Array.from(new Set(selectedProduct.stock.map((item:any) => item.size))).map((size: unknown) => (
+                  <TouchableOpacity
+                    key={size as string}
+                    style={[
+                      styles.optionButton,
+                      selectedSize === size && styles.selectedOptionButton,
+                    ]}
+                    onPress={() => handleSizeSelect(size as string)}
+                  >
+                    <Text style={[styles.optionButtonText, selectedSize === size && styles.selectedOptionButtonText]}>{size as string}</Text>
+                  </TouchableOpacity>
+                ))}
+                <Text style={styles.sizeHelpText}>
+                  Didn't find your size?{' '}
+                  <Text style={styles.contactLink} onPress={handleContactStore}>
+                    Click here
+                  </Text>{' '}
+                  to contact the store.
+                </Text>
+              </>
             ) : (
-              <Text style={styles.unavailableText}>Size not available! Contact 
+              <Text style={styles.unavailableText}>
+                Size not available! Contact{' '}
                 <TouchableOpacity style={styles.vendorButton} onPress={handleVendorChat}>
                   <Text style={styles.vendorButtonText}>Vendor</Text>
                 </TouchableOpacity>
@@ -451,6 +477,15 @@ const styles = StyleSheet.create({
   },
   paginationDotActive: {
     backgroundColor: '#6200EE',
+  },
+  sizeHelpText: {
+    marginTop: 10,
+    fontSize: 14,
+    color: '#666',
+  },
+  contactLink: {
+    color: '#6200EE',
+    textDecorationLine: 'underline',
   },
 });
 

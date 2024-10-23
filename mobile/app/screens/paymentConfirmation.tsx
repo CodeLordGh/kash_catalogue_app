@@ -1,24 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
+import { RouteProp, useNavigation } from '@react-navigation/native';
+import { RootStackParamList } from '../types';
 import axios from 'axios';
 import { baseUrl } from '@/baseUrl';
 import { useSelector } from 'react-redux';
-import { Ionicons } from '@expo/vector-icons';
+import { StackNavigationProp } from '@react-navigation/stack';
 
-const PaymentConfirmation: React.FC = () => {
+type PaymentConfirmationRouteProp = RouteProp<RootStackParamList, 'PaymentConfirmation'>;
+type NavigationProp = StackNavigationProp<RootStackParamList, 'PaymentConfirmation'>;
+
+interface PaymentConfirmationProps {
+  route: PaymentConfirmationRouteProp;
+}
+
+const PaymentConfirmation: React.FC<PaymentConfirmationProps> = ({ route }) => {
+  const { orderId, paymentRequestId } = route.params;
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'completed' | 'failed'>('pending');
   const [orderDetails, setOrderDetails] = useState<any>(null);
-  const navigation = useNavigation();
-  const route = useRoute();
-  const { orderId, checkoutRequestID } = route.params as { orderId: string; checkoutRequestID: string };
   const userInfo = useSelector((state: any) => state.user.userInfo);
+  const navigation = useNavigation<NavigationProp>();
 
   useEffect(() => {
     const checkPaymentStatus = async () => {
       try {
         const response = await axios.get(
-          `${baseUrl}/api/payment-status/${orderId}/${checkoutRequestID}`,
+          `${baseUrl}/api/payment-status/${orderId}/${paymentRequestId}`,
           {
             headers: {
               Authorization: `Bearer ${userInfo.userAuth}`,
@@ -31,6 +38,9 @@ const PaymentConfirmation: React.FC = () => {
           setOrderDetails(response.data.orderDetails);
         } else if (response.data.status === 'failed') {
           setPaymentStatus('failed');
+        } else {
+          // If still pending, check again after 5 seconds
+          setTimeout(checkPaymentStatus, 5000);
         }
       } catch (error) {
         console.error('Error checking payment status:', error);
@@ -38,62 +48,58 @@ const PaymentConfirmation: React.FC = () => {
       }
     };
 
-    const interval = setInterval(checkPaymentStatus, 5000); // Check every 5 seconds
+    // Wait 5 seconds before checking the payment status
+    setTimeout(checkPaymentStatus, 5000);
+  }, [orderId, paymentRequestId, userInfo.userAuth]);
 
-    return () => clearInterval(interval);
-  }, [orderId, checkoutRequestID, userInfo.userAuth]);
+  const handleBackToCart = () => {
+    // Navigate to the MainScreen without passing userData
+    navigation.navigate('BuyerMainScreen');
+  };
 
-  const renderPaymentStatus = () => {
-    switch (paymentStatus) {
-      case 'pending':
-        return (
-          <View style={styles.statusContainer}>
-            <ActivityIndicator size="large" color="#6200EE" />
-            <Text style={styles.statusText}>Waiting for M-Pesa payment confirmation...</Text>
-          </View>
-        );
-      case 'completed':
-        return (
-          <View style={styles.statusContainer}>
-            <Ionicons name="checkmark-circle" size={64} color="#4CAF50" />
-            <Text style={styles.statusText}>Payment Successful!</Text>
-            {orderDetails && (
-              <View style={styles.orderDetails}>
-                <Text style={styles.orderTitle}>Order Details:</Text>
-                <Text>Order ID: {orderDetails.orderId}</Text>
-                <Text>Total Amount: ${orderDetails.totalAmount.toFixed(2)}</Text>
-                {orderDetails.items.map((item: any, index: number) => (
-                  <View key={index} style={styles.itemContainer}>
-                    <Text>{item.name}</Text>
-                    <Text>Color: {item.color}, Size: {item.size}</Text>
-                    <Text>Quantity: {item.quantity}</Text>
-                    <Text>Price: ${item.price.toFixed(2)}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-            <TouchableOpacity style={styles.retryButton} onPress={() => navigation.goBack()}>
-              <Text style={styles.retryButtonText}>Continue Shoping</Text>
-            </TouchableOpacity>
-          </View>
-        );
-      case 'failed':
-        return (
-          <View style={styles.statusContainer}>
-            <Ionicons name="close-circle" size={64} color="#F44336" />
-            <Text style={styles.statusText}>Payment Failed</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={() => navigation.goBack()}>
-              <Text style={styles.retryButtonText}>Retry Payment</Text>
-            </TouchableOpacity>
-          </View>
-        );
-    }
+  const handleBackToItemSelection = () => {
+    // Navigate to the MainScreen without passing userData
+    navigation.navigate('BuyerMainScreen');
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Payment Confirmation</Text>
-      {renderPaymentStatus()}
+      {paymentStatus === 'pending' && (
+        <View style={styles.pendingContainer}>
+          <ActivityIndicator size="large" color="#6200EE" />
+          <Text style={styles.pendingText}>Processing your payment...</Text>
+        </View>
+      )}
+      {paymentStatus === 'completed' && orderDetails && (
+        <ScrollView style={styles.completedContainer}>
+          <Text style={styles.successText}>Payment Successful!</Text>
+          <Text style={styles.orderDetail}>Order ID: {orderDetails.orderId}</Text>
+          <Text style={styles.orderDetail}>Total Amount: GH₵{orderDetails.totalAmount.toFixed(2)}</Text>
+          <Text style={styles.orderDetail}>Transaction ID: {orderDetails.transactionId}</Text>
+          <Text style={styles.orderDetail}>Date: {new Date(orderDetails.transactionDate).toLocaleString()}</Text>
+          <Text style={styles.itemsHeader}>Items:</Text>
+          {orderDetails.items.map((item: any, index: number) => (
+            <View key={index} style={styles.itemContainer}>
+              <Text style={styles.itemName}>{item.name}</Text>
+              <Text style={styles.itemDetail}>Quantity: {item.quantity}</Text>
+              <Text style={styles.itemDetail}>Price: GH₵{item.price.toFixed(2)}</Text>
+            </View>
+          ))}
+          <TouchableOpacity style={styles.button} onPress={handleBackToItemSelection}>
+            <Text style={styles.buttonText}>Back to Item Selection</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      )}
+      {paymentStatus === 'failed' && (
+        <View style={styles.failedContainer}>
+          <Text style={styles.failedText}>Payment Failed</Text>
+          <Text style={styles.failedSubtext}>Please try again or contact support.</Text>
+          <TouchableOpacity style={styles.button} onPress={handleBackToCart}>
+            <Text style={styles.buttonText}>Back to Cart</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
@@ -101,8 +107,8 @@ const PaymentConfirmation: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: '#F5F5F5',
+    padding: 20,
   },
   header: {
     fontSize: 24,
@@ -110,43 +116,74 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
-  statusContainer: {
-    alignItems: 'center',
+  pendingContainer: {
+    flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pendingText: {
+    marginTop: 20,
+    fontSize: 18,
+  },
+  completedContainer: {
     flex: 1,
   },
-  statusText: {
-    fontSize: 18,
-    marginTop: 20,
+  successText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    marginBottom: 20,
     textAlign: 'center',
   },
-  orderDetails: {
-    marginTop: 20,
-    width: '100%',
-    backgroundColor: '#FFFFFF',
-    padding: 15,
-    borderRadius: 10,
+  orderDetail: {
+    fontSize: 16,
+    marginBottom: 10,
   },
-  orderTitle: {
+  itemsHeader: {
     fontSize: 18,
     fontWeight: 'bold',
+    marginTop: 20,
     marginBottom: 10,
   },
   itemContainer: {
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-  },
-  retryButton: {
-    marginTop: 20,
-    backgroundColor: '#6200EE',
-    padding: 10,
+    backgroundColor: '#fff',
     borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
   },
-  retryButtonText: {
-    color: '#FFFFFF',
+  itemName: {
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  itemDetail: {
+    fontSize: 14,
+  },
+  failedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  failedText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#F44336',
+    marginBottom: 10,
+  },
+  failedSubtext: {
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  button: {
+    backgroundColor: '#6200EE',
+    padding: 15,
+    borderRadius: 5,
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

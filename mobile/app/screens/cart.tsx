@@ -59,7 +59,7 @@ const CartItem: React.FC<CartItemProps> = ({ id, name, color, size, quantity, pr
       <View style={styles.itemDetails}>
         <Text style={styles.itemTitle}>{name}</Text>
         <Text style={styles.itemSubtitle}>Color: {color} | Size: {size}</Text>
-        <Text style={styles.itemPrice}>${(price * quantity).toFixed(2)}</Text>
+        <Text style={styles.itemPrice}>GH₵{(price * quantity).toFixed(2)}</Text>
       </View>
       <View style={styles.quantityControl}>
         <TouchableOpacity onPress={handleDecrement} style={styles.quantityButton}>
@@ -111,7 +111,7 @@ const CartFragment: React.FC = () => {
             size: item.size
           })),
           userDetails: {
-            deliveryAddress: userDetails.deliveryAddress,
+            deliveryAddress: (userDetails as any).deliveryAddress,
             phoneNumber: userDetails.phoneNumber
           },
           totalPrice
@@ -123,14 +123,16 @@ const CartFragment: React.FC = () => {
           }
         }
       );
+
+      console.log(response.data)
   
       if (response.data.success) {
-        Alert.alert('Payment Initiated', 'Please check your phone for the M-Pesa payment prompt.');
+        Alert.alert('Payment Initiated', 'Please check your phone for the MTN MoMo payment prompt.');
         dispatch(clearCart());
         // Navigate to the payment confirmation screen
         navigation.navigate('PaymentConfirmation', { 
           orderId: response.data.orderId,
-          checkoutRequestID: response.data.checkoutRequestID
+          paymentRequestId: response.data.paymentRequestId
         });
       } else {
         throw new Error(response.data.message || 'Checkout failed');
@@ -159,7 +161,7 @@ const CartFragment: React.FC = () => {
       </ScrollView>
       <View style={styles.totalSection}>
         <Text style={styles.totalText}>Total:</Text>
-        <Text style={styles.totalPrice}>${totalPrice.toFixed(2)}</Text>
+        <Text style={styles.totalPrice}>GH₵{totalPrice.toFixed(2)}</Text>
       </View>
       <TouchableOpacity style={styles.checkoutButton} onPress={handleCheckout}>
         <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>

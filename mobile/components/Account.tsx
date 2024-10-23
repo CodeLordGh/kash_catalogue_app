@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, Animated, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, TextInput, Animated, TouchableOpacity, Alert, ScrollView, Modal } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
 import { logoutUser, setLoading } from '@/app/screens/userSlice';
@@ -25,6 +25,9 @@ const Account = () => {
   const [editedInfo, setEditedInfo] = useState({ ...userInfo });
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [serviceProvider, setServiceProvider] = useState(userInfo.serviceProvider || '');
+  const [registeredName, setRegisteredName] = useState('');
+  const [showProviderModal, setShowProviderModal] = useState(false);
 
   React.useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -39,21 +42,47 @@ const Account = () => {
   };
 
   const handleSave = async () => {
-    console.log("saving...")
+    console.log("saving...");
+    console.log(editedInfo);
     try {
       dispatch(setLoading(true));
       const endpoint = userInfo.User === "User" ? '/api/buyer/profile' : '/api/seller/profile';
-      const response = await axios.put(`${baseUrl}${endpoint}`, editedInfo, {
+      const response = await axios.put(`${baseUrl}${endpoint}`, {
+        ...editedInfo,
+        serviceProvider
+      }, {
         headers: { Authorization: `Bearer ${userInfo.userAuth}` },
       });
+      
+      console.log("Update response:", response.data);
+      
       if (response.status === 200) {
-        dispatch(updateUserInfo(editedInfo));
+        dispatch(updateUserInfo({...editedInfo, serviceProvider}));
         setEditMode(false);
         Alert.alert('Success', 'Your information has been updated.');
+      } else {
+        throw new Error('Unexpected response status: ' + response.status);
       }
     } catch (error) {
-      console.error('Error updating user info:', error);
-      Alert.alert('Error', 'Failed to update your information. Please try again.');
+      console.error("Error in handleSave:", error);
+      
+      if (axios.isAxiosError(error)) {
+        console.error("Axios error response:", error.response?.data);
+        if (error.response?.status === 400 && error.response.data.registeredName) {
+          setRegisteredName(error.response.data.registeredName);
+          Alert.alert(
+            'Name Mismatch',
+            'The provided name does not match the name registered with the phone number. Please use the registered name or contact your service provider to update your information.',
+            [
+              { text: 'OK', onPress: () => setEditedInfo({...editedInfo, fullName: error.response?.data.registeredName}) }
+            ]
+          );
+        } else {
+          Alert.alert('Error', error.response?.data?.message || 'Failed to update your information. Please try again.');
+        }
+      } else {
+        Alert.alert('Error', 'An unexpected error occurred. Please try again later.');
+      }
     } finally {
       dispatch(setLoading(false));
     }
@@ -88,6 +117,11 @@ const Account = () => {
     Alert.alert('Copied', 'ID copied to clipboard');
   };
 
+  const handleProviderSelect = (provider: string) => {
+    setServiceProvider(provider);
+    setShowProviderModal(false);
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -112,12 +146,29 @@ const Account = () => {
             editMode={editMode}
             onChangeText={(text: string) => setEditedInfo({ ...editedInfo, User: text })}
           />
-          <InfoItem
-            label="Full Name"
-            value={editedInfo.fullName || ''}
-            editMode={editMode}
-            onChangeText={(text: string) => setEditedInfo({ ...editedInfo, fullName: text })}
-          />
+          {userInfo.User === "User" && (
+            <>
+              <InfoItem
+                label="Full Name"
+                value={editedInfo.fullName || ''}
+                editMode={editMode}
+                onChangeText={(text: string) => setEditedInfo({ ...editedInfo, fullName: text })}
+              />
+              <InfoItem
+                label="Phone Number"
+                value={editedInfo.phoneNumber || ''}
+                editMode={editMode}
+                onChangeText={(text: string) => setEditedInfo({ ...editedInfo, phoneNumber: text })}
+              />
+              {editMode && (
+                <TouchableOpacity onPress={() => setShowProviderModal(true)} style={styles.providerButton}>
+                  <Text style={styles.providerButtonText}>
+                    {serviceProvider || 'Select Service Provider'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </>
+          )}
           {userInfo.User === "Seller" && (
             <InfoItem
               label="Business Name"
@@ -131,12 +182,6 @@ const Account = () => {
             value={editedInfo.email || ''}
             editMode={editMode}
             onChangeText={(text: string) => setEditedInfo({ ...editedInfo, email: text })}
-          />
-          <InfoItem
-            label="Phone Number"
-            value={editedInfo.phoneNumber || ''}
-            editMode={editMode}
-            onChangeText={(text: string) => setEditedInfo({ ...editedInfo, phoneNumber: text })}
           />
           <InfoItem
             label={editedInfo.User === "Seller" ? "Store ID" : "User ID"}
@@ -158,6 +203,34 @@ const Account = () => {
         <TouchableOpacity onPress={handleLogout} style={[styles.actionButton, styles.logoutButton]}>
           <Text style={styles.actionButtonText}>Logout</Text>
         </TouchableOpacity>
+
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={showProviderModal}
+          onRequestClose={() => setShowProviderModal(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Select Service Provider</Text>
+              {['MTN', 'Vodafone', 'AirtelTigo'].map((provider) => (
+                <TouchableOpacity
+                  key={provider}
+                  style={styles.providerOption}
+                  onPress={() => handleProviderSelect(provider)}
+                >
+                  <Text style={styles.providerOptionText}>{provider}</Text>
+                </TouchableOpacity>
+              ))}
+              <TouchableOpacity
+                style={[styles.providerOption, styles.cancelOption]}
+                onPress={() => setShowProviderModal(false)}
+              >
+                <Text style={styles.cancelOptionText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </Animated.View>
     </ScrollView>
   );
@@ -277,6 +350,51 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     backgroundColor: '#FF3B30',
+  },
+  providerButton: {
+    backgroundColor: '#f0f0f0',
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 15,
+  },
+  providerButtonText: {
+    color: '#333',
+    fontSize: 16,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    width: '80%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  providerOption: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  providerOptionText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  cancelOption: {
+    borderBottomWidth: 0,
+    marginTop: 10,
+  },
+  cancelOptionText: {
+    color: 'red',
+    textAlign: 'center',
   },
 });
 

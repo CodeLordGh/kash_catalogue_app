@@ -64,7 +64,7 @@ const actionSlice = createSlice({
         id: state.selectedProduct._id,
         name: state.selectedProduct.name,
         color: state.selectedColor,
-        size: state.selectedSize,
+        size: state.selectedSize || 'N/A', // Use 'N/A' if size is not available
         quantity: state.quantity,
         price: state.selectedProduct.price,
       };
@@ -83,7 +83,9 @@ const actionSlice = createSlice({
 
       // Update product color quantity
       const colorIndex = state.selectedProduct.stock.findIndex(c => c.color === state.selectedColor);
-      state.selectedProduct.stock[colorIndex].qty -= state.quantity;
+      if (colorIndex !== -1) {
+        state.selectedProduct.stock[colorIndex].qty -= state.quantity;
+      }
 
       // Reset quantity after adding to cart
       state.quantity = 1;

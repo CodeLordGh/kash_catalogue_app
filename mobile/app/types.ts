@@ -1,12 +1,14 @@
-
 export type RootStackParamList = {
     RegisterScreen: undefined; // or specify params if needed
     Login: undefined;
-    BuyerMainScreen: undefined;
-    SellerMainScreen: undefined;
+    BuyerMainScreen: { userData: any };
+    SellerMainScreen: { userData: any };
     Chat: undefined;
     ProductPage: undefined,
-    PaymentConfirmation: { orderId: string; checkoutRequestID: string };
+    PaymentConfirmation: {
+      orderId: string;
+      paymentRequestId: string;
+    };
   };
 
   export type ChatParamList = {

@@ -34,13 +34,15 @@ const AddProduct = () => {
   const [color, setColor] = useState('');
   const [qty, setQty] = useState('');
   const [images, setImages] = useState<string[]>([]);
-const [variants, setVariants] = useState<{ color: string; qty: number }[]>([]);
+  const [size, setSize] = useState('');
+  const [variants, setVariants] = useState<{ color: string; qty: number; size?: string }[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
   const handleAddVariant = () => {
     if (color && qty) {
-      setVariants([...variants, { color, qty: parseInt(qty) }]);
+      setVariants([...variants, { color, qty: parseInt(qty), size: size || undefined }]);
       setColor('');
       setQty('');
+      setSize('');
       scrollViewRef.current?.scrollToEnd({ animated: true });
     } else {
       Alert.alert('Invalid Input', 'Please enter both color and quantity.');
@@ -85,12 +87,7 @@ const [variants, setVariants] = useState<{ color: string; qty: number }[]>([]);
     try {
       dispatch(setLoading(true));
   
-      console.log('Images to upload:', images);
-  
-      // Upload multiple images to Cloudinary
       const imageUrls = await uploadMultipleImages(images as any);
-  
-      console.log('Uploaded image URLs:', imageUrls);
   
       const newProduct = {
         name,
@@ -110,11 +107,9 @@ const [variants, setVariants] = useState<{ color: string; qty: number }[]>([]);
         }
       );
 
-      // Add the new product to the Redux store
-      dispatch(addProduct(response.data.product));
-
+      dispatch(addProduct(response.data));
       dispatch(setLoading(false));
-      Alert.alert('Success', response.data.message);
+      Alert.alert('Success', 'Product added successfully');
       navigation.goBack();
     } catch (error) {
       dispatch(setLoading(false));
@@ -218,6 +213,13 @@ const [variants, setVariants] = useState<{ color: string; qty: number }[]>([]);
                 onChangeText={setQty}
                 keyboardType="numeric"
               />
+              <TextInput
+                style={[styles.input, styles.variantInput]}
+                placeholder="Size (optional)"
+                placeholderTextColor="#888"
+                value={size}
+                onChangeText={setSize}
+              />
               <TouchableOpacity style={styles.addVariantButton} onPress={handleAddVariant}>
                 <Ionicons name="add" size={24} color="white" />
               </TouchableOpacity>
@@ -227,7 +229,7 @@ const [variants, setVariants] = useState<{ color: string; qty: number }[]>([]);
           {variants.map((variant, index) => (
             <View key={index} style={styles.variantItem}>
               <Text style={styles.variantText}>
-                {variant.color} - Qty: {variant.qty}
+                {variant.color} - Qty: {variant.qty}{variant.size ? ` - Size: ${variant.size}` : ''}
               </Text>
               <TouchableOpacity onPress={() => handleRemoveVariant(index)}>
                 <Ionicons name="close-circle-outline" size={24} color="#FF3B30" />

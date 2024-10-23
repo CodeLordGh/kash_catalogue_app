@@ -22,7 +22,7 @@ import { baseUrl } from '@/baseUrl';
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
-console.log(baseUrl)
+// console.log(baseUrl)
 
 const LoginScreen = () => {
   const [storeId, setStoreId] = useState('');
