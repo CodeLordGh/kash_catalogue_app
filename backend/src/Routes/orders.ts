@@ -1,11 +1,70 @@
 import express, { Request, Response } from "express";
 import { authenticateToken } from "../Utils/auth";
 import { CustomRequest } from "./seller";
-import { Catalog, Order, Product } from "../Models/models";
-import { initiateMpesaPayment } from "../Services/payment";
+import { Catalog, Order, Product, Payment } from "../Models/models";
+import { initiateMtnPayment, checkMtnPaymentStatus } from "../Services/payment";
 import { validateObjectId } from "../Utils/validation";
 
 const router = express.Router();
+
+// Helper function to validate cart items
+const validateCartItems = async (cartItems: any[]) => {
+  const orderItems = [];
+  let calculatedTotal = 0;
+  let catalog;
+
+  for (const item of cartItems) {
+    if (!validateObjectId(item.product)) {
+      throw new Error("Invalid product ID");
+    }
+
+    const product = await Product.findById(item.product).populate("catalog");
+    if (!product) {
+      throw new Error(`Product not found: ${item.product}`);
+    }
+
+    const stockItem = product.stock.find(
+      (stockItem) => stockItem.color === item.color && stockItem.size === item.size
+    );
+
+    if (!stockItem || stockItem.qty < item.quantity) {
+      throw new Error(`Insufficient stock for product: ${product.name}, Color: ${item.color}, Size: ${item.size}`);
+    }
+
+    orderItems.push({
+      product: product._id,
+      name: product.name,
+      quantity: item.quantity,
+      price: product.price,
+      color: item.color,
+      size: item.size,
+    });
+
+    calculatedTotal += product.price * item.quantity;
+
+    if (!catalog) {
+      catalog = product.catalog;
+    }
+  }
+
+  return { orderItems, calculatedTotal, catalog };
+};
+
+// Helper function to update product stock
+const updateProductStock = async (orderItems: any[]) => {
+  for (const item of orderItems) {
+    const product = await Product.findById(item.product);
+    if (product) {
+      const stockItem = product.stock.find(
+        (stockItem) => stockItem.color === item.color && stockItem.size === item.size
+      );
+      if (stockItem) {
+        stockItem.qty -= item.quantity;
+        await product.save();
+      }
+    }
+  }
+};
 
 router.post(
   "/checkout",
@@ -15,102 +74,31 @@ router.post(
       const { cartItems, userDetails, totalPrice } = req.body;
       const buyer = req.user?.id;
 
-      // console.log(cartItems, userDetails, totalPrice)
-
       // Validate input
       if (!Array.isArray(cartItems) || cartItems.length === 0) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid cart items" });
+        return res.status(400).json({ success: false, message: "Invalid cart items" });
       }
-
-      // console.log("I reach here")
 
       if (!userDetails || !userDetails.phoneNumber) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid user details" });
+        return res.status(400).json({ success: false, message: "Invalid user details" });
       }
-      // console.log("I reach here")
 
       if (typeof totalPrice !== "number" || totalPrice <= 0) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid total price" });
+        return res.status(400).json({ success: false, message: "Invalid total price" });
       }
 
       // Validate and process cart items
-      const orderItems = [];
-      let calculatedTotal = 0;
-      let catalog;
-
-      // console.log("I reach here")
-
-      for (const item of cartItems) {
-        if (!validateObjectId(item.product)) {
-          return res
-            .status(400)
-            .json({ success: false, message: "Invalid product ID" });
-        }
-
-        const product = await Product.findById(item.product).populate(
-          "catalog"
-        );
-        // console.log(product?._id)
-        if (!product) {
-          return res.status(404).json({
-            success: false,
-            message: `Product not found: ${item.product}`,
-          });
-        }
-
-        // Check stock for specific color and size
-        const stockItem = product.stock.find(
-          (stockItem) => stockItem.color === item.color // && stockItem.size === item.size
-        );
-
-        // console.log(stockItem, item.color);
-
-        if (!stockItem || stockItem.qty < item.quantity) {
-          return res.status(400).json({
-            success: false,
-            message: `Insufficient stock for product: ${product.name}, Color: ${item.color}, Size: ${item.size}`,
-          });
-        }
-
-        orderItems.push({
-          product: product._id,
-          name: product.name,
-          quantity: item.quantity,
-          price: product.price,
-          color: item.color,
-          size: item.size,
-        });
-        // console.log("I reach here");
-
-        calculatedTotal += product.price * item.quantity;
-
-        // Update product stock
-        stockItem.qty -= item.quantity;
-        await product.save();
-
-        // Set the seller (assuming all products are from the same seller)
-        if (!catalog) {
-          catalog = (product as any).catalog;
-        }
-      }
+      const { orderItems, calculatedTotal, catalog } = await validateCartItems(cartItems);
 
       // Verify total price
       if (Math.abs(calculatedTotal - totalPrice) > 0.01) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Total price mismatch" });
+        return res.status(400).json({ success: false, message: "Total price mismatch" });
       }
 
       // Create order
       const order = new Order({
         buyer,
-        seller: catalog._id,
+        seller: catalog?._id,
         items: orderItems,
         totalPrice: calculatedTotal,
         deliveryAddress: userDetails.deliveryAddress || "",
@@ -119,22 +107,25 @@ router.post(
 
       await order.save();
 
-      // Initiate M-Pesa payment
-      const paymentResult = await initiateMpesaPayment({
+      // Initiate MTN payment
+      const paymentResult = await initiateMtnPayment({
         phoneNumber: userDetails.phoneNumber,
         amount: calculatedTotal,
         orderId: order._id.toString(),
       });
 
       if (paymentResult.success) {
-        order.checkoutRequestID  = paymentResult.checkoutRequestID as any
+        order.paymentRequestId = paymentResult.paymentRequestId as any;
         await order.save();
+
+        // Update product stock
+        await updateProductStock(orderItems);
 
         res.status(201).json({
           success: true,
           message: "Order placed and payment initiated",
           orderId: order._id,
-          checkoutRequestID: paymentResult.checkoutRequestID,
+          paymentRequestId: paymentResult.paymentRequestId,
         });
       } else {
         // If payment initiation fails, delete the order
@@ -149,176 +140,105 @@ router.post(
       }
     } catch (error) {
       console.error("Checkout error:", error);
-      res
-        .status(500)
-        .json({ success: false, message: "An error occurred during checkout" });
+      res.status(500).json({ success: false, message: "An error occurred during checkout" });
     }
   }
 );
-
-router.post("/mpesa/callback", async (req: Request, res: Response) => {
-  try {
-    const {
-      Body: {
-        stkCallback: {
-          MerchantRequestID,
-          CheckoutRequestID,
-          ResultCode,
-          ResultDesc,
-          CallbackMetadata,
-        },
-      },
-    } = req.body;
-
-    console.log("M-Pesa Callback Received:", JSON.stringify(req.body, null, 2));
-
-    if (ResultCode === 0) {
-      // Payment successful
-      const amount = CallbackMetadata.Item.find(
-        (item: any) => item.Name === "Amount"
-      ).Value;
-      const mpesaReceiptNumber = CallbackMetadata.Item.find(
-        (item: any) => item.Name === "MpesaReceiptNumber"
-      ).Value;
-      const transactionDate = CallbackMetadata.Item.find(
-        (item: any) => item.Name === "TransactionDate"
-      ).Value;
-      const phoneNumber = CallbackMetadata.Item.find(
-        (item: any) => item.Name === "PhoneNumber"
-      ).Value;
-
-      // Find the order using the CheckoutRequestID
-      const order = await Order.findOne({
-        checkoutRequestID: CheckoutRequestID,
-      });
-
-      console.log("I am here");
-
-      if (order) {
-        // Update order status
-        order.paymentStatus = "completed";
-        order.mpesaReceiptNumber = mpesaReceiptNumber;
-        order.transactionDate = transactionDate;
-        order.paidAmount = amount;
-        order.payerPhoneNumber = phoneNumber;
-
-        await order.save();
-
-        console.log(`Payment completed for order ${order._id}`);
-      } else {
-        console.error(
-          `Order not found for CheckoutRequestID: ${CheckoutRequestID}`
-        );
-      }
-    } else {
-      // Payment failed
-      console.error(`Payment failed: ${ResultDesc}`);
-
-      // Find the order using the CheckoutRequestID
-      const order = await Order.findOne({
-        checkoutRequestID: CheckoutRequestID,
-      });
-
-      if (order) {
-        // Update order status to failed
-        order.paymentStatus = "failed";
-        order.paymentFailureReason = ResultDesc;
-
-        await order.save();
-
-        console.log(`Payment failed for order ${order._id}`);
-      } else {
-        console.error(
-          `Order not found for CheckoutRequestID: ${CheckoutRequestID}`
-        );
-      }
-    }
-
-    // Always respond with a success to M-Pesa
-    res.json({ ResultCode: 0, ResultDesc: "Callback received successfully" });
-  } catch (error) {
-    console.error("Error processing M-Pesa callback:", error);
-    res
-      .status(500)
-      .json({ ResultCode: 1, ResultDesc: "Internal server error" });
-  }
-});
 
 router.get(
-  "/payment-status/:orderId/:checkoutRequestID",
+  "/payment-status/:orderId/:paymentRequestId",
   async (req: Request, res: Response) => {
     try {
-      const { orderId, checkoutRequestID } = req.params;
+      const { orderId, paymentRequestId } = req.params;
 
-      const order = await Order.findOne({ _id: orderId, checkoutRequestID });
-
-      // console.log(order);
+      const order = await Order.findOne({ _id: orderId, paymentRequestId });
 
       if (!order) {
-        return res
-          .status(404)
-          .json({ status: "error", message: "Order not found" });
+        return res.status(404).json({ status: "error", message: "Order not found" });
       }
 
-      let status;
-      switch (order.paymentStatus) {
-        case "completed":
-          status = "completed";
-          break;
-        case "failed":
-          status = "failed";
-          break;
-        default:
-          status = "pending";
+      const paymentStatus = await checkMtnPaymentStatus(paymentRequestId);
+
+      if (paymentStatus.success) {
+        if (paymentStatus.status === 'completed') {
+          order.paymentStatus = "completed";
+          order.transactionId = paymentStatus.transactionId;
+          await order.save();
+
+          // Save payment details to the new Payment collection
+          const paymentDetails = paymentStatus.paymentDetails;
+          const payment = new Payment({
+            order: order._id,
+            financialTransactionId: paymentDetails.financialTransactionId,
+            externalId: paymentDetails.externalId,
+            amount: paymentDetails.amount,
+            currency: paymentDetails.currency,
+            payer: paymentDetails.payer,
+            payerMessage: paymentDetails.payerMessage,
+            payeeNote: paymentDetails.payeeNote,
+            status: paymentDetails.status,
+          });
+          await payment.save();
+
+          return res.json({
+            status: "completed",
+            orderDetails: {
+              orderId: order._id,
+              totalAmount: order.totalPrice,
+              items: order.items,
+              transactionId: order.transactionId,
+              transactionDate: (order as any).updatedAt,
+            },
+          });
+        } else if (paymentStatus.status === 'pending') {
+          return res.json({ status: "pending" });
+        }
       }
 
-      status = "completed"
+      // Handle failed or error cases
+      order.paymentStatus = "failed";
+      order.paymentFailureReason = paymentStatus.error || "Unknown error";
+      await order.save();
 
-      res.json({
-        status,
-        orderDetails:
-          status === "completed"
-            ? {
-                orderId: order._id,
-                totalAmount: order.totalPrice,
-                items: order.items,
-                mpesaReceiptNumber: order.mpesaReceiptNumber,
-                transactionDate: order.transactionDate,
-              }
-            : null,
+      let statusCode = 400;
+      if (paymentStatus.status === 'not_found') statusCode = 404;
+      if (paymentStatus.status === 'api_error') statusCode = 502;
+      if (paymentStatus.status === 'network_error') statusCode = 503;
+
+      return res.status(statusCode).json({ 
+        status: "failed", 
+        error: paymentStatus.error || "Payment failed",
+        errorType: paymentStatus.status
       });
+
     } catch (error) {
       console.error("Error checking payment status:", error);
-      res
-        .status(500)
-        .json({ status: "error", message: "Internal server error" });
+      res.status(500).json({ 
+        status: "error", 
+        message: "Internal server error",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   }
 );
-
 
 router.get('/orders', authenticateToken, async (req: CustomRequest, res: Response) => {
   try {
-    // The authenticateToken middleware should attach the user to the request
-    const catalog = await Catalog.findOne({seller: req.user?.id});
+    const catalog = await Catalog.findOne({ seller: req.user?.id });
 
     if (!catalog) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
     
-    // Fetch orders for the vendor
     const orders = await Order.find({ seller: catalog._id })
       .sort({ createdAt: -1 })
       .populate('buyer', 'fullName email')
       .populate('items.product', 'name price');
 
-    console.log('Found orders:', orders.length);
-
     if (orders.length === 0) {
       return res.json([]);
     }
 
-    // Transform the orders to include only necessary information
     const transformedOrders = orders.map(order => ({
       id: order._id,
       buyerName: (order.buyer as any).fullName || 'Unknown',

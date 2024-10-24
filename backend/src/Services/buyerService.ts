@@ -3,6 +3,8 @@ import { Buyer, Seller, Catalog, Product, Order } from "../Models/models";
 import * as admin from "firebase-admin";
 import crypto from "crypto";
 import mongoose from "mongoose";
+import { generateAccessToken } from "../Routes/seller";
+import { Chat } from "../Models/chatModel";
 
 {/** TODO: use crypto to generate chatId */}
 
@@ -19,51 +21,69 @@ const updatePhoneNumber = async (buyerId: string, phoneNumber: string) => {
 
 export const registerBuyer = async (
   storeId: string
-): Promise<{ buyerId: string } | {message: string }> => {
-  const seller = await Seller.findOne({ storeId });
-  // console.log(storeId)
-  if (!seller) {
-    const err = new Error("No store found!");
-    throw err
-  }
-
-  const buyerId = generateUniqueId().toString();
-  // console.log(buyerId);
-  const buyer = new Buyer({ buyerId, associatedStores: [seller._id] });
-
-  // Create a chat in Firebase
-  const chatId = generateUniqueId().toString(); // Generate a unique chat ID
-  const chatData = {
-    storeId,
-    buyerId,
-    messages: [
-      {
-        sender: seller.storeId, // Using storeId as sender
-        message: `Welcome to ${seller.businessName}!`,
-        timestamp: admin.database.ServerValue.TIMESTAMP,
-        _id: "imone"
-      },
-    ],
-  };
+): Promise<{ user: IBuyer & { seller: ISeller, catalog: any, type: string }, accessToken: string }> => {
+  let chatId: string | undefined;
 
   try {
-    // Store chat in Firebase
-    await admin.database().ref(`chats/${chatId}`).set(chatData);
+    const seller = await Seller.findOne({ storeId }).select('-password -email -chatId -phoneNumber -refreshToken -tokenBlacklist -fullName -customers -createdAt -updatedAt -__v');
+    if (!seller) {
+      throw new Error("No store found!");
+    }
 
-    // Save chat ID in buyer and seller
+    const buyerId = generateUniqueId().toString();
+    const buyer = new Buyer({ buyerId, associatedStores: [seller._id] });
+
+    chatId = generateUniqueId().toString();
+    const chatData = {
+      storeId,
+      buyerId,
+      messages: [
+        {
+          sender: seller.storeId,
+          message: `Welcome to ${seller.businessName}!`,
+          timestamp: admin.database.ServerValue.TIMESTAMP,
+          _id: "imone"
+        },
+      ],
+    };
+
+    await admin.database().ref(`chats/${chatId}`).set(chatData);
     buyer.chatId = chatId;
     seller.chatId = chatId;
 
     await buyer.save();
     await seller.save();
+
+    const catalog = await Catalog.findById(seller.catalog).select('-_id -createdAt -updatedAt -__v -seller').populate({
+      path: 'products',
+      select: '-__v'
+    });
+
+    const accessToken = generateAccessToken(buyer._id);
+
+    return {
+      user: {
+        ...buyer.toObject(),
+        seller: {
+          businessName: seller.businessName,
+          storeId: seller.storeId,
+          catalog: seller.catalog,
+        },
+        type: 'User',
+        catalog
+      },
+      accessToken
+    };
   } catch (error) {
-    console.log(error);
-    throw new Error("Error creating chat")
+    // Delete the chat from Firebase if it was created
+    if (chatId) {
+      await admin.database().ref(`chats/${chatId}`).remove();
+    }
+
+    console.error("Error creating chat or user:", error);
+    throw new Error("Error creating chat or user");
   }
-
-  return { buyerId };
 };
-
 
 interface IBuyer {
   fullName?: string;
@@ -82,23 +102,20 @@ interface IBuyer {
 }
 
 interface ISeller {
-  fullName: string;
-  refreshToken?: string;
-  tokenBlacklist?: string[];
+  fullName?: string; // Make optional
   businessName: string;
-  phoneNumber?: string;
-  password: string;
-  email: string;
   storeId: string;
   catalog: mongoose.Types.ObjectId;
   customers?: mongoose.Types.ObjectId[];
   deliveryAddresses?: mongoose.Types.ObjectId[];
   chatId?: string[];
+  password?: string; // Make optional
+  email?: string; // Make optional
 }
 
 
 export const loginBuyer = async (input: string, fcmToken: string) => {
-  // console.log("frontend data input is ",input)
+  console.log("frontend data input is ",input)
   try {
     const user = await Buyer.findOne({ buyerId: input }).populate({
       path: 'cart.product',
@@ -116,6 +133,7 @@ export const loginBuyer = async (input: string, fcmToken: string) => {
     });
     
     if (!user) {
+      console.log("no user found")
       return null
     }
     
@@ -135,11 +153,11 @@ export const loginBuyer = async (input: string, fcmToken: string) => {
     }
 
     return {
-    ...user.toObject(),
-    seller,
-    type: 'User',
-    catalog
-  };
+      ...user.toObject(),
+      seller,
+      type: 'User',
+      catalog
+    };
   } catch (error) {
     throw error
   }
@@ -147,8 +165,7 @@ export const loginBuyer = async (input: string, fcmToken: string) => {
 
 export const updateBuyerProfile = async (
   buyerId: string,
-  fullName: string,
-  phoneNumber: string
+  profileData: { fullName: string; phoneNumber: string; serviceProvider: string }
 ): Promise<void> => {
   const buyer = await Buyer.findById(buyerId);
 
@@ -156,8 +173,9 @@ export const updateBuyerProfile = async (
     throw new Error("Buyer not found");
   }
 
-  buyer.fullName = fullName;
-  buyer.phoneNumber = phoneNumber;
+  buyer.fullName = profileData.fullName;
+  buyer.phoneNumber = profileData.phoneNumber;
+  buyer.serviceProvider = profileData.serviceProvider;
   await buyer.save();
 };
 

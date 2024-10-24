@@ -176,7 +176,13 @@ interface IOrder extends Document {
   _id: mongoose.Types.ObjectId;
   buyer: mongoose.Types.ObjectId;
   seller: mongoose.Types.ObjectId;
-  items: Array<{product: mongoose.Types.ObjectId; quantity: number ; price: number}>
+  items: Array<{
+    product: mongoose.Types.ObjectId;
+    quantity: number;
+    price: number;
+    color: string;
+    size: string;
+  }>;
   totalPrice: number;
   deliveryAddress: string;
   checkoutRequestID: String,
@@ -185,8 +191,10 @@ interface IOrder extends Document {
   transactionDate: String;
   paidAmount: Number;
   payerPhoneNumber: String;
-  paymentFailureReason: String;
   paymentMethod: string;
+  paymentRequestId: string;
+  transactionId?: string;
+  paymentFailureReason?: string;
 }
 
 const OrderSchema: Schema = new Schema(
@@ -202,6 +210,8 @@ const OrderSchema: Schema = new Schema(
         },
         quantity: { type: Number, required: true },
         price: { type: Number, required: true },
+        color: { type: String, required: true },
+        size: { type: String, required: true },
       },
     ],
     totalPrice: { type: Number, required: true },
@@ -216,11 +226,11 @@ const OrderSchema: Schema = new Schema(
       enum: ['pending', 'completed', 'failed'],
       default: 'pending'
     },
-    mpesaReceiptNumber: {type:String},
+    paymentReceiptNumber: {type:String},
     transactionDate: {type:String},
     paidAmount: {type:String},
-    payerPhoneNumber: {type:String},
-    paymentFailureReason: {type: String}
+    paymentFailureReason: {type: String},
+    paymentRequestId: { type: String }, 
   },
   { timestamps: true }
 );
@@ -231,20 +241,35 @@ export const Order = mongoose.model<IOrder>("Order", OrderSchema);
 interface IPayment extends Document {
   _id: mongoose.Types.ObjectId;
   order: mongoose.Types.ObjectId;
-  amount: number;
-
+  financialTransactionId: string;
+  externalId: string;
+  amount: string;
+  currency: string;
+  payer: {
+    partyIdType: string;
+    partyId: string;
+  };
+  payerMessage: string;
+  payeeNote: string;
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const PaymentSchema: Schema = new Schema(
   {
     order: { type: Schema.Types.ObjectId, ref: "Order", required: true },
-    amount: { type: Number, required: true },
-    status: {
-      type: String,
-      enum: ["pending", "completed", "failed"],
-      default: "pending",
+    financialTransactionId: { type: String, required: true },
+    externalId: { type: String, required: true },
+    amount: { type: String, required: true },
+    currency: { type: String, required: true },
+    payer: {
+      partyIdType: { type: String, required: true },
+      partyId: { type: String, required: true },
     },
-    paymentMethod: { type: String, required: true },
+    payerMessage: { type: String },
+    payeeNote: { type: String },
+    status: { type: String, required: true },
   },
   { timestamps: true }
 );
@@ -280,3 +305,6 @@ const MessageSchema: Schema = new Schema(
 );
 
 export const Message = mongoose.model<IMessage>("Message", MessageSchema);
+
+
+

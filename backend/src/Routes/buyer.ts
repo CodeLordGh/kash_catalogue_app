@@ -13,6 +13,7 @@ import {
 } from '../Services/buyerService';
 import { generateAccessToken } from './seller';
 import { authenticateToken } from '../Utils/auth';
+import { validateAccountHolderStatus, getBasicUserInfo } from '../Services/mtnService';
 
 interface CustomRequest extends express.Request {
   buyerId?: string;
@@ -57,31 +58,64 @@ router.post("/login", async (req, res) => {
 router.post('/register', async (req, res) => {
   try {
     const { storeId } = req.body;
-    console.log(storeId)
+    console.log('Registering buyer for store:', storeId);
     const result = await registerBuyer(storeId);
+    console.log('Registration result:', result);
     res.status(201).json(result);
   } catch (error: any) {
-    res.status(400).json({ message: error.message });
+    console.error('Error registering buyer:', error);
+    if (error instanceof Error) {
+      res.status(400).json({ message: error.message, stack: error.stack });
+    } else {
+      res.status(400).json({ message: 'An unknown error occurred' });
+    }
   }
 });
 
 // Update buyer profile
 router.put('/buyer/profile', authenticateToken, async (req: CustomRequest, res) => {
   try {
-    const { fullName, phoneNumber } = req.body;
+    const { fullName, phoneNumber, serviceProvider } = req.body;
     const buyerId = req.user?.id;
 
-    console.log('Received update request:', { fullName, phoneNumber, buyerId });
-
+    console.log('Received update request:', { fullName, phoneNumber, serviceProvider, buyerId });
 
     if (!buyerId) {
       console.log('User ID is missing');
       return res.status(400).json({ message: 'User ID is required' });
     }
-    await updateBuyerProfile(buyerId, fullName, phoneNumber);
+
+    if (!fullName || !phoneNumber || !serviceProvider) {
+      return res.status(400).json({ message: 'Full name, phone number, and service provider are required' });
+    }
+
+    // Validate account holder status
+    const isActive = await validateAccountHolderStatus(phoneNumber);
+    if (!isActive) {
+      return res.status(400).json({ message: 'The provided phone number is not active, registered, or could not be verified' });
+    }
+
+    // Get basic user info
+    try {
+      const userInfo = await getBasicUserInfo(phoneNumber);
+      if (userInfo.name.toLowerCase() !== fullName.toLowerCase() && userInfo.name !== "Sand Box") {
+        console.log(fullName, userInfo.name)
+        return res.status(400).json({ 
+          message: 'The provided name does not match the name registered with the phone number',
+          registeredName: userInfo.name
+        });
+      }
+    } catch (error) {
+      console.error('Error getting basic user info:', error);
+      return res.status(400).json({ message: 'Unable to verify user information' });
+    }
+
+    // Update user profile
+    await updateBuyerProfile(buyerId, { fullName, phoneNumber, serviceProvider });
     res.status(200).json({ message: 'Profile updated successfully' });
   } catch (error: any) {
-    res.status(400).json({ message: error.message });
+    console.error('Error updating profile:', error);
+    res.status(500).json({ message: 'An error occurred while updating the profile' });
   }
 }); 
 

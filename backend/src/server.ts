@@ -5,6 +5,8 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import * as admin from "firebase-admin";
+import { v4 as uuidv4 } from 'uuid';
+
 
 // Import routes
 import sellerRoutes, { CustomRequest } from "./Routes/seller";
@@ -12,6 +14,7 @@ import productRoutes from "./Routes/products";
 import buyerRoutes from "./Routes/buyer";
 import ordersRoute from "./Routes/orders";
 import { authenticateToken } from "./Utils/auth";
+import { createApiKey, createApiUser, getAccessToken } from "./Services/payment";
 
 
 // Load environment variables
@@ -44,6 +47,18 @@ app.use("/api", sellerRoutes);
 app.use("/api", productRoutes);
 app.use("/api", buyerRoutes);
 app.use("/api",  ordersRoute)
+app.get("/user", async (req, res) => {
+  try {
+    const userId = await createApiUser();
+    const apiKey = await createApiKey(userId);
+    const accessToken = await getAccessToken();
+    const referenceId = uuidv4();
+    res.json({ userId, apiKey, accessToken, referenceId })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: "Error creating API user" });
+  }
+})
 
 // Chat routes using Firebase
 app.post("/chat", authenticateToken, async (req: CustomRequest, res) => {

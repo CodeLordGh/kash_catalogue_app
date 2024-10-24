@@ -59,7 +59,7 @@ const PaymentConfirmation: React.FC<PaymentConfirmationProps> = ({ route }) => {
 
   const handleBackToItemSelection = () => {
     // Navigate to the MainScreen without passing userData
-    navigation.navigate('BuyerMainScreen');
+    navigation.navigate('ItemSelectionFragment');
   };
 
   return (
